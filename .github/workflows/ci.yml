@@ -25,6 +25,7 @@ jobs:
         with:
           bun-version: latest
       - run: bun install
+      - run: bun --bun run prisma generate
       - run: bun --bun run build
 
   test:
