@@ -1,14 +1,8 @@
 import { test, expect } from "@playwright/test";
 import path from "path";
-import fs from "fs";
-import { createRequire } from "module";
-import * as url from "url";
+import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
 
-const require = createRequire(import.meta.url);
-const { PrismaClient } = require("@/generated/prisma/client");
-const { PrismaLibSql } = require("@prisma/adapter-libsql");
-
-const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const fixturesDir = path.join(__dirname, "../fixtures");
 const testDbPath = "/home/elvis/workspace/typescript/credit-card-bills-manager/feat-end-to-end-tests/tests/e2e-test.db";
 
