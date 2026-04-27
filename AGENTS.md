@@ -12,6 +12,7 @@ bun --bun run dev     # Start dev server (http://localhost:3000)
 bun --bun run build   # Production build
 bun --bun run lint    # ESLint
 bun run test          # Run unit tests
+bun run test:e2e     # Run E2E tests
 ```
 
 ## Prisma Commands
@@ -53,3 +54,53 @@ Columns: `data,lançamento,valor`
 - `src/lib/parsers/__tests__/itau.test.ts` - Parser unit tests (15 tests)
 - `src/app/api/transactions/import/__tests__/route.test.ts` - Import API tests (5 tests)
 - `src/app/api/transactions/__tests__/route.test.ts` - List API tests (8 tests)
+
+## E2E Tests (Playwright)
+```bash
+bun run test:e2e          # Run E2E tests
+```
+
+### Adding E2E Tests
+1. Create test file in `tests/e2e/` (e.g., `tests/e2e/home.spec.ts`)
+2. Use fixtures from `tests/fixtures/` directory
+3. Test database: `tests/e2e-test.db` (auto-created with schema)
+4. Database resets between tests via `resetTestDatabase()` function
+
+### E2E Test Structure
+```typescript
+import { test, expect } from "@playwright/test";
+import path from "path";
+
+// Test database path
+const testDbPath = "/path/to/tests/e2e-test.db";
+
+test.describe("Feature Name", () => {
+  test.beforeEach(async () => {
+    // Reset database before each test
+    const prisma = createPrismaClient(testDbPath);
+    await prisma.transaction.deleteMany();
+    await prisma.$disconnect();
+  });
+
+  test("should do something", async ({ page }) => {
+    await page.goto("/");
+    // ... test steps
+  });
+});
+```
+
+### E2E Fixtures
+Place CSV files in `tests/fixtures/`:
+- Format: `data,lançamento,valor`
+- Decimal separator: comma (`,`)
+
+## E2E Test Database Setup
+```bash
+# Create test database with schema (one time)
+DATABASE_URL=file:./tests/e2e-test.db bun --bun run prisma migrate dev --name init_e2e
+```
+
+Or copy from dev.db:
+```bash
+cp dev.db tests/e2e-test.db
+```

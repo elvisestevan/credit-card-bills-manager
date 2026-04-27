@@ -44,4 +44,11 @@ next-env.d.ts
 
 *.csv
 *.csv#
+
+# databases
 *.db
+!tests/e2e-test.db
+
+# playwright
+test-results/
+playwright-report/

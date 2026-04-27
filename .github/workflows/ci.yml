@@ -37,3 +37,16 @@ jobs:
           bun-version: latest
       - run: bun install
       - run: bun run test
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun --bun run prisma generate
+      - run: DATABASE_URL=file:./dev.db bun --bun run prisma db execute --stdin <<< 'DELETE FROM "Transaction";'
+      - run: npx playwright install firefox
+      - run: bun run test:e2e
