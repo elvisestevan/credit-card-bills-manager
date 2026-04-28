@@ -1,7 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
-import path from "path";
 
-const testDbPath = path.resolve(__dirname, "tests/e2e-test.db");
+const testDbPath = "./tests/e2e-test.db";
 
 export default defineConfig({
   testDir: "./tests/e2e",

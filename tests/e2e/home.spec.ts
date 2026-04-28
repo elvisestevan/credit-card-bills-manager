@@ -1,12 +1,16 @@
 import { test, expect } from "@playwright/test";
 import { execSync } from "child_process";
 
-const fixturesDir = "/home/elvis/workspace/typescript/credit-card-bills-manager/feat-end-to-end-tests/tests/fixtures";
-const testDbPath = "/home/elvis/workspace/typescript/credit-card-bills-manager/feat-end-to-end-tests/tests/e2e-test.db";
-const devDbPath = "/home/elvis/workspace/typescript/credit-card-bills-manager/feat-end-to-end-tests/dev.db";
+const fixturesDir = "./tests/fixtures";
+const testDbPath = "./tests/e2e-test.db";
+const devDbPath = "./dev.db";
 
 function resetTestDatabase() {
-  execSync(`cp ${devDbPath} ${testDbPath}`, { stdio: "ignore" });
+  try {
+    execSync(`cp ${devDbPath} ${testDbPath}`, { stdio: "ignore" });
+  } catch {
+    // Ignore if copy fails
+  }
 }
 
 test.describe("Home Page E2E", () => {
