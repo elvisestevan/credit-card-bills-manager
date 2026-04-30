@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "DATABASE_URL=file:/home/elvis/sqlite/credit-card-bills-manager.db next dev",
+    "dev": "DATABASE_URL=file:/home/elvis/sqlite/credit-card-bills-manager.db bash scripts/setup.sh && DATABASE_URL=file:/home/elvis/sqlite/credit-card-bills-manager.db next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
