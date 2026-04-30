@@ -15,3 +15,18 @@ export default defineConfig({
     },
   },
 });
+
+// Override environment for API tests
+export const apiTestConfig = defineConfig({
+  test: {
+    environment: "node",
+    include: ["src/app/api/**/*.test.ts"],
+    exclude: ["node_modules", "dist"],
+    pool: "forks",
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+});

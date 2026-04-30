@@ -49,7 +49,18 @@ Columns: `data,lançamento,valor`
 - Installments extracted via regex `(\d+)/(\d+)$` appended to description
 - Negative amounts = credits/refunds
 
+## ESLint Rules
+- `@typescript-eslint/no-explicit-any` and `@typescript-eslint/no-unused-vars` are disabled for `src/**/__tests__/**` files in `eslint.config.mjs`
+- Use `(global.fetch as any)` pattern for mocking fetch in tests (allowed by rule override)
+
 ## Test Files
 - `src/lib/parsers/__tests__/itau.test.ts` - Parser unit tests (15 tests)
-- `src/app/api/transactions/import/__tests__/route.test.ts` - Import API tests (5 tests)
+- `src/app/api/transactions/import/__tests__/route.test.ts` - Import API tests (1 test)
 - `src/app/api/transactions/__tests__/route.test.ts` - List API tests (8 tests)
+- `src/components/__tests__/FileUpload.test.tsx` - FileUpload component tests (9 tests)
+- `src/components/__tests__/TransactionsTable.test.tsx` - TransactionsTable component tests (15 tests)
+
+## CI Pipeline
+- `.github/workflows/ci.yml` runs on `main`/`master` pushes and PRs
+- **test job** requires `DATABASE_URL="file:./dev.db" bun --bun run prisma generate` before `bun run test`
+- All 48 tests pass via `vitest` with `jsdom` environment
