@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "bun:test";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 const mockPrisma = {
   transaction: {
@@ -47,7 +47,7 @@ describe("GET /api/transactions", async () => {
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
 
     const request = new Request("http://localhost:3000/api/transactions?page=3&limit=50");
-    const response = await GET(request);
+    await GET(request);
 
     expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -62,7 +62,7 @@ describe("GET /api/transactions", async () => {
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
 
     const request = new Request("http://localhost:3000/api/transactions?sortBy=amount&sortOrder=asc");
-    const response = await GET(request);
+    await GET(request);
 
     expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -76,7 +76,7 @@ describe("GET /api/transactions", async () => {
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
 
     const request = new Request("http://localhost:3000/api/transactions?sortBy=invalid&sortOrder=asc");
-    const response = await GET(request);
+    await GET(request);
 
     expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -90,7 +90,7 @@ describe("GET /api/transactions", async () => {
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
 
     const request = new Request("http://localhost:3000/api/transactions");
-    const response = await GET(request);
+    await GET(request);
 
     expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -140,7 +140,7 @@ describe("GET /api/transactions", async () => {
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
 
     const request = new Request("http://localhost:3000/api/transactions?sortBy=description");
-    const response = await GET(request);
+    await GET(request);
 
     expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
