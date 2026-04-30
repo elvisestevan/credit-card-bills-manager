@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "bun:test";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 const mockPrisma = {
   transaction: {
