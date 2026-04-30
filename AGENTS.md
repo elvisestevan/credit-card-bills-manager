@@ -7,12 +7,13 @@
 
 ## Dev Commands
 ```bash
-bun install           # Install dependencies
-bun --bun run dev     # Start dev server (http://localhost:3000)
+bun --bun run dev     # Start dev server (auto-installs & generates if needed)
 bun --bun run build   # Production build
 bun --bun run lint    # ESLint
 bun run test          # Run unit tests
 ```
+
+**Note**: The `dev` command is idempotent - it automatically runs `bun install` and `prisma generate` when needed (e.g., fresh worktree).
 
 ## Prisma Commands
 ```bash
