@@ -7,7 +7,7 @@ describe("FileUpload", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (global as any).fetch = vi.fn();
+    global.fetch = vi.fn();
   });
 
   afterEach(() => {

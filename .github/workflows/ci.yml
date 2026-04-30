@@ -36,4 +36,5 @@ jobs:
         with:
           bun-version: latest
       - run: bun install
+      - run: DATABASE_URL="file:./dev.db" bun --bun run prisma generate
       - run: bun run test
