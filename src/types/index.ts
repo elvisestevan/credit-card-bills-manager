@@ -44,7 +44,7 @@ export interface BillTransactionsResponse {
     id: string;
     monthYear: string;
   };
-  transactions: TransactionListResponse["data"];
+  data: TransactionListResponse["data"];
   pagination: TransactionListResponse["pagination"];
 }
 
