@@ -8,6 +8,13 @@ interface BillTransactionsPageProps {
   params: Promise<{ billId: string }>;
 }
 
+interface BillSummary {
+  totalTransactions: number;
+  totalValue: number;
+  totalInstallmentTransactions: number;
+  totalInstallmentValue: number;
+}
+
 export default function BillTransactionsPage({ params }: BillTransactionsPageProps) {
   const [billId, setBillId] = useState<string | null>(null);
   const [billMonthYear, setBillMonthYear] = useState<string | null>(null);
@@ -16,6 +23,8 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
   const [sortBy, setSortBy] = useState("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [isLoading, setIsLoading] = useState(true);
+  const [summary, setSummary] = useState<BillSummary | null>(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(true);
 
   useEffect(() => {
     async function loadParams() {
@@ -42,7 +51,7 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
 
       if (response.ok) {
         setBillMonthYear(result.bill.monthYear);
-        setData(result.transactions || []);
+        setData(result.data || []);
         setPagination(result.pagination);
       } else {
         console.error("Failed to fetch bill transactions:", result);
@@ -57,6 +66,31 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
+
+  useEffect(() => {
+    if (!billId) return;
+
+    async function fetchSummary() {
+      setIsSummaryLoading(true);
+      try {
+        const response = await fetch(`/api/bills/${billId}/summary`);
+        const data = await response.json();
+        setSummary(data);
+      } catch (error) {
+        console.error("Failed to fetch bill summary:", error);
+      } finally {
+        setIsSummaryLoading(false);
+      }
+    }
+    fetchSummary();
+  }, [billId]);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -121,7 +155,47 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-x-auto">
+        <section className="mb-8">
+          {isSummaryLoading ? (
+            <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-4">
+              <div className="text-center text-zinc-500">Loading summary...</div>
+            </div>
+          ) : summary && summary.totalTransactions > 0 ? (
+            <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-4">
+              <h3 className="text-sm font-medium text-zinc-400 mb-4">Summary</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-xs text-zinc-500">Total Transactions</p>
+                  <p className="text-lg font-semibold text-zinc-200">
+                    {summary.totalTransactions}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500">Total Value</p>
+                  <p className="text-lg font-semibold text-zinc-200">
+                    {formatCurrency(summary.totalValue)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500">Installment Transactions</p>
+                  <p className="text-lg font-semibold text-zinc-200">
+                    {summary.totalInstallmentTransactions}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500">Installment Value</p>
+                  <p className="text-lg font-semibold text-zinc-200">
+                    {formatCurrency(summary.totalInstallmentValue)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        <section>
+          <h2 className="text-lg font-medium text-zinc-200 mb-4">Transactions</h2>
+          <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-x-auto">
           {(data?.length === 0) && !isLoading ? (
             <div className="text-center py-8 text-zinc-500">
               No transactions for this bill.
@@ -199,6 +273,7 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
             </div>
           )}
         </div>
+        </section>
       </main>
     </div>
   );
