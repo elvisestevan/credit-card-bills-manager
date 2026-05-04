@@ -28,3 +28,35 @@ export interface TransactionListResponse {
     total: number;
   };
 }
+
+export interface Bill {
+  id: string;
+  monthYear: string;
+  totalTransactions: number;
+  totalAmount: number;
+  totalInstallmentTransactions: number;
+  totalInstallmentAmount: number;
+  lastUpdated: string;
+}
+
+export interface BillTransactionsResponse {
+  bill: {
+    id: string;
+    monthYear: string;
+  };
+  data: TransactionListResponse["data"];
+  pagination: TransactionListResponse["pagination"];
+}
+
+export interface ImportConflict {
+  transaction: string;
+  existingBill: string;
+}
+
+export interface ImportResponse {
+  success: boolean;
+  added?: number;
+  ignored?: number;
+  error?: string;
+  conflicts?: ImportConflict[];
+}

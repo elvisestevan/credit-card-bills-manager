@@ -6,6 +6,9 @@ const mockPrisma = {
     findMany: vi.fn(),
     createMany: vi.fn(),
   },
+  bill: {
+    upsert: vi.fn(),
+  },
 };
 
 vi.mock("@/lib/db", () => ({
@@ -21,13 +24,11 @@ vi.mock("@/generated/prisma/client", () => ({
   },
 }));
 
-function createMockRequest(csvContent: string, filename: string) {
+function createMockRequest(csvContent: string, filename: string, billMonthYear: string) {
   const url = "http://localhost:3000/api/transactions/import";
   
-  // Create a mock NextRequest with mocked formData method
   const request = new NextRequest(url, { method: "POST" });
   
-  // Create a File with text() method polyfilled
   const file = new File([csvContent], filename, { type: "text/csv" });
   if (!file.text) {
     (file as any).text = () => Promise.resolve(csvContent);
@@ -35,6 +36,7 @@ function createMockRequest(csvContent: string, filename: string) {
   
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("billMonthYear", billMonthYear);
   
   vi.spyOn(request, "formData").mockResolvedValue(formData as any);
   
@@ -59,6 +61,7 @@ describe("POST /api/transactions/import", async () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
+    expect(data.success).toBe(false);
     expect(data.error).toBe("No file provided");
   });
 
@@ -77,53 +80,95 @@ describe("POST /api/transactions/import", async () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
+    expect(data.success).toBe(false);
     expect(data.error).toBe("File must be a CSV");
   });
 
-  it("should successfully import valid CSV", async () => {
-    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
-    mockPrisma.transaction.createMany.mockResolvedValueOnce({ count: 2 });
-
-    const csvContent = "data,lançamento,valor\n2024-01-01,Purchase1,-100\n2024-01-02,Purchase2,-200";
-    const request = createMockRequest(csvContent, "test.csv");
-
-    const response = await POST(request);
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(data.imported).toBe(2);
-    expect(data.skipped).toBe(0);
-    expect(data.importId).toBeDefined();
-  });
-
-  it("should skip duplicate transactions", async () => {
-    const existingTx = {
-      date: new Date("2024-01-01"),
-      description: "Purchase1",
-      amount: { toString: () => "-100" },
-    };
-    mockPrisma.transaction.findMany.mockResolvedValueOnce([existingTx]);
-    mockPrisma.transaction.createMany.mockResolvedValueOnce({ count: 1 });
-
-    const csvContent = "data,lançamento,valor\n2024-01-01,Purchase1,-100\n2024-01-02,Purchase2,-200";
-    const request = createMockRequest(csvContent, "test.csv");
-
-    const response = await POST(request);
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(data.imported).toBe(1);
-    expect(data.skipped).toBe(1);
-  });
-
-  it("should return 400 for CSV with only headers", async () => {
-    const csvContent = "data,lançamento,valor";
-    const request = createMockRequest(csvContent, "test.csv");
+  it("should return 400 if billMonthYear is invalid", async () => {
+    const csvContent = "data,lançamento,valor\n2024-01-01,Purchase1,-100";
+    const request = createMockRequest(csvContent, "test.csv", "April 2026");
 
     const response = await POST(request);
     const data = await response.json();
 
     expect(response.status).toBe(400);
+    expect(data.success).toBe(false);
+    expect(data.error).toContain("Invalid bill ID format");
+  });
+
+  it("should successfully import valid CSV with billMonthYear", async () => {
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
+    mockPrisma.bill.upsert.mockResolvedValueOnce({ id: "bill123", monthYear: "04-2026" });
+    mockPrisma.transaction.createMany.mockResolvedValueOnce({ count: 2 });
+
+    const csvContent = "data,lançamento,valor\n2024-01-01,Purchase1,-100\n2024-01-02,Purchase2,-200";
+    const request = createMockRequest(csvContent, "test.csv", "04-2026");
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.added).toBe(2);
+    expect(data.ignored).toBe(0);
+  });
+
+  it("should skip duplicate transactions for the same bill", async () => {
+    const existingTx = {
+      date: new Date("2024-01-01"),
+      description: "Purchase1",
+      amount: { toString: () => "-100" },
+      billId: "bill123",
+      bill: { monthYear: "04-2026" },
+    };
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([existingTx]);
+    mockPrisma.bill.upsert.mockResolvedValueOnce({ id: "bill123", monthYear: "04-2026" });
+    mockPrisma.transaction.createMany.mockResolvedValueOnce({ count: 1 });
+
+    const csvContent = "data,lançamento,valor\n2024-01-01,Purchase1,-100\n2024-01-02,Purchase2,-200";
+    const request = createMockRequest(csvContent, "test.csv", "04-2026");
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.added).toBe(1);
+    expect(data.ignored).toBe(1);
+  });
+
+  it("should refuse import if transaction exists in different bill", async () => {
+    const existingTx = {
+      date: new Date("2024-01-01"),
+      description: "Purchase1",
+      amount: { toString: () => "-100" },
+      billId: "bill456",
+      bill: { monthYear: "03-2026" },
+    };
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([existingTx]);
+
+    const csvContent = "data,lançamento,valor\n2024-01-01,Purchase1,-100";
+    const request = createMockRequest(csvContent, "test.csv", "04-2026");
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.success).toBe(false);
+    expect(data.error).toBe("Conflicting transactions found in other bills");
+    expect(data.conflicts).toHaveLength(1);
+    expect(data.conflicts[0].existingBill).toBe("03-2026");
+  });
+
+  it("should return 400 for CSV with only headers", async () => {
+    const csvContent = "data,lançamento,valor";
+    const request = createMockRequest(csvContent, "test.csv", "04-2026");
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.success).toBe(false);
     expect(data.error).toBe("Failed to parse CSV");
   });
 });

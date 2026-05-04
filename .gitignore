@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# branch build artifacts
+feat-support-multiple-bills/
+
 # production
 /build
 

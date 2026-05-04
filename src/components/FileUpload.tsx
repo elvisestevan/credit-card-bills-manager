@@ -6,15 +6,44 @@ interface FileUploadProps {
   onUploadComplete: () => void;
 }
 
+const BILL_MONTH_YEAR_REGEX = /^(0[1-9]|1[0-2])-\d{4}$/;
+
 export function FileUpload({ onUploadComplete }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [billMonthYear, setBillMonthYear] = useState("");
+  const [billError, setBillError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const validateBillMonthYear = (value: string) => {
+    if (!value) {
+      setBillError("Bill ID is required");
+      return false;
+    }
+    if (!BILL_MONTH_YEAR_REGEX.test(value)) {
+      setBillError("Invalid format. Use MM-YYYY (e.g., 04-2026)");
+      return false;
+    }
+    setBillError(null);
+    return true;
+  };
+
+  const handleBillMonthYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setBillMonthYear(value);
+    if (billError) {
+      validateBillMonthYear(value);
+    }
+  };
 
   const handleFile = async (file: File) => {
     if (!file.name.endsWith(".csv")) {
       setMessage({ type: "error", text: "Please select a CSV file" });
+      return;
+    }
+
+    if (!validateBillMonthYear(billMonthYear)) {
       return;
     }
 
@@ -24,6 +53,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("billMonthYear", billMonthYear);
 
       const response = await fetch("/api/transactions/import", {
         method: "POST",
@@ -33,15 +63,29 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage({
-          type: "error",
-          text: result.error || "Failed to import file",
-        });
+        if (result.conflicts && result.conflicts.length > 0) {
+          const conflictMessages = result.conflicts
+            .map(
+              (c: { transaction: string; existingBill: string }) =>
+                `"${c.transaction}" exists in bill ${c.existingBill}`
+            )
+            .join("\n");
+          setMessage({
+            type: "error",
+            text: `${result.error}\n${conflictMessages}`,
+          });
+        } else {
+          setMessage({
+            type: "error",
+            text: result.error || "Failed to import file",
+          });
+        }
       } else {
         setMessage({
           type: "success",
-          text: `Imported ${result.imported} transactions (${result.skipped} duplicates skipped)`,
+          text: `Imported ${result.added} transactions (${result.ignored} duplicates skipped)`,
         });
+        setBillMonthYear("");
         onUploadComplete();
       }
     } catch {
@@ -82,6 +126,28 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
 
   return (
     <div className="w-full max-w-md">
+      <div className="mb-4">
+        <label htmlFor="billMonthYear" className="block text-sm font-medium text-zinc-300 mb-2">
+          Bill ID (MM-YYYY)
+        </label>
+        <input
+          id="billMonthYear"
+          type="text"
+          value={billMonthYear}
+          onChange={handleBillMonthYearChange}
+          placeholder="e.g., 04-2026"
+          className={`w-full px-3 py-2 bg-zinc-800 border rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 ${
+            billError
+              ? "border-red-500 focus:ring-red-500"
+              : "border-zinc-700 focus:ring-blue-500"
+          }`}
+          disabled={isUploading}
+        />
+        {billError && (
+          <p className="mt-1 text-sm text-red-400">{billError}</p>
+        )}
+      </div>
+
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -121,7 +187,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
 
       {message && (
         <div
-          className={`mt-4 p-3 rounded-lg text-sm ${
+          className={`mt-4 p-3 rounded-lg text-sm whitespace-pre-line ${
             message.type === "success"
               ? "bg-green-500/10 text-green-400 border border-green-500/20"
               : "bg-red-500/10 text-red-400 border border-red-500/20"
