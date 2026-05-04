@@ -52,6 +52,8 @@ export async function POST(request: NextRequest) {
         date: true,
         description: true,
         amount: true,
+        installmentNumber: true,
+        totalInstallments: true,
         billId: true,
         bill: {
           select: {
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     const existingKeys = new Map(
       existingTransactions.map((t) => [
-        `${t.date.toISOString().split("T")[0]}|${t.description}|${t.amount.toString()}`,
+        `${t.date.toISOString().split("T")[0]}|${t.description}|${t.amount.toString()}|${t.installmentNumber ?? "null"}|${t.totalInstallments ?? "null"}`,
         t,
       ])
     );
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
     const conflicts: Array<{ transaction: string; existingBill: string }> = [];
 
     for (const t of transactions) {
-      const key = `${t.date.toISOString().split("T")[0]}|${t.description}|${t.amount}`;
+      const key = `${t.date.toISOString().split("T")[0]}|${t.description}|${t.amount}|${t.installmentNumber ?? "null"}|${t.totalInstallments ?? "null"}`;
       const existing = existingKeys.get(key);
       if (existing && existing.bill.monthYear !== billMonthYear) {
         const installmentInfo = t.installmentNumber && t.totalInstallments
@@ -98,7 +100,7 @@ export async function POST(request: NextRequest) {
     });
 
     const newTransactions = transactions.filter((t) => {
-      const key = `${t.date.toISOString().split("T")[0]}|${t.description}|${t.amount}`;
+      const key = `${t.date.toISOString().split("T")[0]}|${t.description}|${t.amount}|${t.installmentNumber ?? "null"}|${t.totalInstallments ?? "null"}`;
       const existing = existingKeys.get(key);
       return !existing;
     });
