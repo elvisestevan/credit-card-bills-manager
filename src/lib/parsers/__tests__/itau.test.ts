@@ -64,6 +64,16 @@ describe("parseItauCsv", () => {
     expect(result.transactions[0].description).toBe("AMAZON");
   });
 
+  it("should not match long numeric IDs as installments when valid installment pattern exists at end", () => {
+    const csv = "data,lançamento,valor\n2025-11-21,ANACAPRI*10835287405/05,93.9";
+    const result = parseItauCsv(csv);
+
+    expect(result.transactions).toHaveLength(1);
+    expect(result.transactions[0].description).toBe("ANACAPRI*108352874");
+    expect(result.transactions[0].installmentNumber).toBe(5);
+    expect(result.transactions[0].totalInstallments).toBe(5);
+  });
+
   it("should handle quoted CSV values", () => {
     const csv = 'data,lançamento,valor\n2024-01-01,"STORE NAME, LLC",100';
     const result = parseItauCsv(csv);

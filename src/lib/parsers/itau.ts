@@ -1,6 +1,6 @@
 import { ItauTransaction } from "@/types";
 
-const INSTALLMENT_REGEX = /(\d+)\/(\d+)$/;
+const INSTALLMENT_REGEX = /(\d{1,2})\/(\d{1,2})$/;
 
 export function parseItauCsv(csvContent: string): {
   transactions: ItauTransaction[];
