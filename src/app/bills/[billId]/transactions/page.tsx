@@ -225,6 +225,9 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
                   <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">
                     Installments
                   </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                    Category
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -242,6 +245,11 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
                       {transaction.installmentNumber && transaction.totalInstallments
                         ? `${transaction.installmentNumber}/${transaction.totalInstallments}`
                         : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-zinc-300">
+                      {transaction.categoryName || (
+                        <span className="text-zinc-600">Uncategorized</span>
+                      )}
                     </td>
                   </tr>
                 ))}

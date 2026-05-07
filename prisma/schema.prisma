@@ -7,6 +7,13 @@ datasource db {
   provider = "sqlite"
 }
 
+model Category {
+  id           Int          @id @default(autoincrement())
+  name         String       @unique
+  transactions Transaction[]
+  createdAt    DateTime     @default(now())
+}
+
 model Bill {
   id           String        @id @default(cuid())
   monthYear    String        @unique
@@ -16,7 +23,7 @@ model Bill {
 }
 
 model Transaction {
-  id                Int      @id @default(autoincrement())
+  id                Int       @id @default(autoincrement())
   date              DateTime
   description       String
   amount            Decimal
@@ -24,9 +31,12 @@ model Transaction {
   installmentNumber Int?
   totalInstallments Int?
   importId          String
+  categoryId        Int?
+  category          Category? @relation(fields: [categoryId], references: [id])
   billId            String
-  bill              Bill     @relation(fields: [billId], references: [id])
-  createdAt         DateTime @default(now())
+  bill              Bill      @relation(fields: [billId], references: [id])
+  createdAt         DateTime  @default(now())
 
   @@index([billId])
+  @@index([categoryId])
 }

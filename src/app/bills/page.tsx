@@ -107,15 +107,21 @@ export default function BillsPage() {
                     <th className="px-4 py-3 text-right text-sm font-medium text-zinc-400">
                       Installment Transactions
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-zinc-400">
-                      Installment Amount
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
-                      Last Updated
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">
-                      Actions
-                    </th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-zinc-400">
+                Installment Amount
+              </th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-zinc-400">
+                Pending
+              </th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-zinc-400">
+                Pending Amount
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                Last Updated
+              </th>
+              <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">
+                Actions
+              </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -139,6 +145,16 @@ export default function BillsPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-zinc-300 text-right font-medium">
                         {formatCurrency(bill.totalInstallmentAmount)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right">
+                        <span className={bill.pendingCount > 0 ? "text-yellow-400" : "text-zinc-500"}>
+                          {bill.pendingCount}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right font-medium">
+                        <span className={bill.pendingAmount > 0 ? "text-yellow-400" : "text-zinc-500"}>
+                          {formatCurrency(bill.pendingAmount)}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-zinc-400">
                         {formatDate(bill.lastUpdated)}
