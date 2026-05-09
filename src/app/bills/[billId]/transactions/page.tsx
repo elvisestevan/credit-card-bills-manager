@@ -14,6 +14,8 @@ interface BillSummary {
   totalValue: number;
   totalInstallmentTransactions: number;
   totalInstallmentValue: number;
+  lastInstallmentCount: number;
+  lastInstallmentTotal: number;
 }
 
 export default function BillTransactionsPage({ params }: BillTransactionsPageProps) {
@@ -165,7 +167,7 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
           ) : summary && summary.totalTransactions > 0 ? (
             <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-4">
               <h3 className="text-sm font-medium text-zinc-400 mb-4">Summary</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <p className="text-xs text-zinc-500">Total Transactions</p>
                   <p className="text-lg font-semibold text-zinc-200">
@@ -188,6 +190,18 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
                   <p className="text-xs text-zinc-500">Installment Value</p>
                   <p className="text-lg font-semibold text-zinc-200">
                     {formatCurrency(summary.totalInstallmentValue)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500">Last Installments</p>
+                  <p className="text-lg font-semibold text-zinc-200">
+                    {summary.lastInstallmentCount}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500">Last Installments Total</p>
+                  <p className="text-lg font-semibold text-zinc-200">
+                    {formatCurrency(summary.lastInstallmentTotal)}
                   </p>
                 </div>
               </div>

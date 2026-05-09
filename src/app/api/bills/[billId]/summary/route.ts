@@ -19,7 +19,7 @@ export async function GET(
       );
     }
 
-    const [transactions, installments] = await Promise.all([
+    const [transactions, installments, lastInstallments] = await Promise.all([
       prisma.transaction.findMany({
         where: { billId },
       }),
@@ -27,6 +27,17 @@ export async function GET(
         where: {
           billId,
           installmentNumber: {
+            not: null,
+          },
+        },
+      }),
+      prisma.transaction.findMany({
+        where: {
+          billId,
+          installmentNumber: {
+            not: null,
+          },
+          totalInstallments: {
             not: null,
           },
         },
@@ -40,12 +51,22 @@ export async function GET(
       (sum, t) => sum + Number(t.amount),
       0
     );
+    const lastInstallmentTransactions = lastInstallments.filter(
+      (t) => t.installmentNumber === t.totalInstallments
+    );
+    const lastInstallmentCount = lastInstallmentTransactions.length;
+    const lastInstallmentTotal = lastInstallmentTransactions.reduce(
+      (sum, t) => sum + Number(t.amount),
+      0
+    );
 
     return NextResponse.json({
       totalTransactions,
       totalValue,
       totalInstallmentTransactions,
       totalInstallmentValue,
+      lastInstallmentCount,
+      lastInstallmentTotal,
     });
   } catch (error) {
     console.error("Bill summary error:", error);
