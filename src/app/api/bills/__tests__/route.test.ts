@@ -36,9 +36,9 @@ describe("GET /api/bills", async () => {
         updatedAt: new Date("2026-04-30T12:00:00.000Z"),
         _count: { transactions: 5 },
         transactions: [
-          { amount: { toNumber: () => 100 }, installmentNumber: null, totalInstallments: null },
-          { amount: { toNumber: () => 200 }, installmentNumber: 1, totalInstallments: 3 },
-          { amount: { toNumber: () => 300 }, installmentNumber: 2, totalInstallments: 3 },
+          { amount: { toNumber: () => 100 }, installmentNumber: null, totalInstallments: null, categoryId: null },
+          { amount: { toNumber: () => 200 }, installmentNumber: 1, totalInstallments: 3, categoryId: 1 },
+          { amount: { toNumber: () => 300 }, installmentNumber: 2, totalInstallments: 3, categoryId: null },
         ],
       },
     ];
@@ -57,6 +57,8 @@ describe("GET /api/bills", async () => {
       totalAmount: 600,
       totalInstallmentTransactions: 2,
       totalInstallmentAmount: 500,
+      pendingCount: 2,
+      pendingAmount: 400,
       lastUpdated: "2026-04-30T12:00:00.000Z",
     });
   });

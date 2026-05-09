@@ -37,6 +37,7 @@ export async function GET(
         skip,
         take: limit,
         orderBy: { [orderByField]: orderByDirection },
+        include: { category: true },
       }),
       prisma.transaction.count({
         where: { billId },
@@ -51,6 +52,8 @@ export async function GET(
       cardName: t.cardName,
       installmentNumber: t.installmentNumber,
       totalInstallments: t.totalInstallments,
+      categoryId: t.categoryId,
+      categoryName: t.category?.name || null,
     }));
 
     return NextResponse.json({

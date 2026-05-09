@@ -8,6 +8,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") ?? "20", 10);
     const sortBy = searchParams.get("sortBy") ?? "date";
     const sortOrder = searchParams.get("sortOrder") ?? "desc";
+    const search = searchParams.get("search");
+    const categoryId = searchParams.get("categoryId");
 
     const skip = (page - 1) * limit;
 
@@ -16,13 +18,27 @@ export async function GET(request: NextRequest) {
     const orderByDirection =
       sortOrder === "asc" ? ("asc" as const) : ("desc" as const);
 
+    const where: {
+      description?: { contains: string };
+      categoryId?: number | null;
+    } = {};
+    if (search) {
+      where.description = { contains: search };
+    }
+    if (categoryId === "null") {
+      where.categoryId = null;
+    } else if (categoryId) {
+      where.categoryId = parseInt(categoryId, 10);
+    }
+
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
+        where,
         skip,
         take: limit,
         orderBy: { [orderByField]: orderByDirection },
       }),
-      prisma.transaction.count(),
+      prisma.transaction.count({ where }),
     ]);
 
     const data = transactions.map((t) => ({

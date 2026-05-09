@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { BillTransactionsResponse, TransactionListResponse } from "@/types";
+import { BillTransactionsResponse, TransactionListResponse, Transaction } from "@/types";
+import { CategorizationModal } from "@/components/CategorizationModal";
 
 interface BillTransactionsPageProps {
   params: Promise<{ billId: string }>;
@@ -25,6 +26,7 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
   const [isLoading, setIsLoading] = useState(true);
   const [summary, setSummary] = useState<BillSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+  const [categorizeTransaction, setCategorizeTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     async function loadParams() {
@@ -225,6 +227,9 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
                   <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">
                     Installments
                   </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                    Category
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -242,6 +247,16 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
                       {transaction.installmentNumber && transaction.totalInstallments
                         ? `${transaction.installmentNumber}/${transaction.totalInstallments}`
                         : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-zinc-300">
+                      {transaction.categoryName || (
+                        <button
+                          onClick={() => setCategorizeTransaction(transaction as Transaction)}
+                          className="text-yellow-400 hover:text-yellow-300 text-xs font-medium"
+                        >
+                          Categorize
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -275,6 +290,14 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
         </div>
         </section>
       </main>
+      {categorizeTransaction && billId && (
+        <CategorizationModal
+          billId={billId}
+          initialTransaction={categorizeTransaction}
+          onClose={() => setCategorizeTransaction(null)}
+          onSaved={fetchTransactions}
+        />
+      )}
     </div>
   );
 }

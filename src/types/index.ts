@@ -21,6 +21,8 @@ export interface TransactionListResponse {
     cardName: string | null;
     installmentNumber: number | null;
     totalInstallments: number | null;
+    categoryId: number | null;
+    categoryName: string | null;
   }[];
   pagination: {
     page: number;
@@ -36,7 +38,26 @@ export interface Bill {
   totalAmount: number;
   totalInstallmentTransactions: number;
   totalInstallmentAmount: number;
+  pendingCount: number;
+  pendingAmount: number;
   lastUpdated: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  createdAt: string;
+}
+
+export interface Transaction {
+  id: number;
+  date: string;
+  description: string;
+  amount: string;
+  installmentNumber: number | null;
+  totalInstallments: number | null;
+  categoryId: number | null;
+  categoryName?: string;
 }
 
 export interface BillTransactionsResponse {

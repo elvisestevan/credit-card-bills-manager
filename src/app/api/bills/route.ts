@@ -14,6 +14,7 @@ export async function GET() {
             amount: true,
             installmentNumber: true,
             totalInstallments: true,
+            categoryId: true,
           },
         },
       },
@@ -37,6 +38,15 @@ export async function GET() {
         0
       );
 
+      const pendingTransactions = bill.transactions.filter(
+        (t) => t.categoryId === null
+      );
+
+      const pendingAmount = pendingTransactions.reduce(
+        (sum, t) => sum + (t.amount as Prisma.Decimal).toNumber(),
+        0
+      );
+
       return {
         id: bill.id,
         monthYear: bill.monthYear,
@@ -44,6 +54,8 @@ export async function GET() {
         totalAmount,
         totalInstallmentTransactions: installmentTransactions.length,
         totalInstallmentAmount,
+        pendingCount: pendingTransactions.length,
+        pendingAmount,
         lastUpdated: bill.updatedAt.toISOString(),
       };
     });
