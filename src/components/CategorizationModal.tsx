@@ -7,14 +7,20 @@ import { CategoryDropdown } from "@/components/CategoryDropdown";
 interface CategorizationModalProps {
   billId: string;
   onClose: () => void;
+  initialTransaction?: Transaction | null;
+  onSaved?: () => void;
 }
 
 export function CategorizationModal({
   billId,
   onClose,
+  initialTransaction,
+  onSaved,
 }: CategorizationModalProps) {
-  const [transaction, setTransaction] = useState<Transaction | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [transaction, setTransaction] = useState<Transaction | null>(
+    initialTransaction ?? null
+  );
+  const [isLoading, setIsLoading] = useState(!initialTransaction);
   const [isSaving, setIsSaving] = useState(false);
   const [showBulkPrompt, setShowBulkPrompt] = useState(false);
   const [matchingTransactions, setMatchingTransactions] = useState<
@@ -52,8 +58,10 @@ export function CategorizationModal({
   }, [billId]);
 
   useEffect(() => {
-    fetchNextTransaction(0);
-  }, [fetchNextTransaction]);
+    if (!initialTransaction) {
+      fetchNextTransaction(0);
+    }
+  }, [fetchNextTransaction, initialTransaction]);
 
   const checkMatchingTransactions = useCallback(
     async (description: string, currentTransactionId: number) => {
@@ -71,11 +79,21 @@ export function CategorizationModal({
           setSelectedTransactionIds(otherMatching.map((t: { id: number }) => t.id));
           setShowBulkPrompt(true);
         } else {
-          fetchNextTransaction(0);
+          if (initialTransaction) {
+            onSaved?.();
+            onClose();
+          } else {
+            fetchNextTransaction(0);
+          }
         }
       } catch (error) {
         console.error("Failed to check matching transactions:", error);
-        fetchNextTransaction(0);
+        if (initialTransaction) {
+          onSaved?.();
+          onClose();
+        } else {
+          fetchNextTransaction(0);
+        }
       }
     },
     [fetchNextTransaction]
@@ -134,7 +152,12 @@ export function CategorizationModal({
         setMatchingTransactions([]);
         setSelectedTransactionIds([]);
         setSkipOffset(0);
-        fetchNextTransaction(0);
+        if (initialTransaction) {
+          onSaved?.();
+          onClose();
+        } else {
+          fetchNextTransaction(0);
+        }
       }
     } catch (error) {
       console.error("Failed to bulk update:", error);
@@ -318,13 +341,18 @@ export function CategorizationModal({
                 Update Selected ({selectedTransactionIds.length})
               </button>
               <button
-                onClick={() => {
-                  setShowBulkPrompt(false);
-                  setMatchingTransactions([]);
-                  setSelectedTransactionIds([]);
-                  setSkipOffset(0);
-                  fetchNextTransaction(0);
-                }}
+                  onClick={() => {
+                    setShowBulkPrompt(false);
+                    setMatchingTransactions([]);
+                    setSelectedTransactionIds([]);
+                    setSkipOffset(0);
+                    if (initialTransaction) {
+                      onSaved?.();
+                      onClose();
+                    } else {
+                      fetchNextTransaction(0);
+                    }
+                  }}
                 className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded text-zinc-200"
               >
                 Skip

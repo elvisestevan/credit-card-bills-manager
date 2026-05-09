@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { BillTransactionsResponse, TransactionListResponse } from "@/types";
+import { BillTransactionsResponse, TransactionListResponse, Transaction } from "@/types";
+import { CategorizationModal } from "@/components/CategorizationModal";
 
 interface BillTransactionsPageProps {
   params: Promise<{ billId: string }>;
@@ -25,6 +26,7 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
   const [isLoading, setIsLoading] = useState(true);
   const [summary, setSummary] = useState<BillSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+  const [categorizeTransaction, setCategorizeTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     async function loadParams() {
@@ -248,7 +250,12 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
                     </td>
                     <td className="px-4 py-3 text-sm text-zinc-300">
                       {transaction.categoryName || (
-                        <span className="text-zinc-600">Uncategorized</span>
+                        <button
+                          onClick={() => setCategorizeTransaction(transaction as Transaction)}
+                          className="text-yellow-400 hover:text-yellow-300 text-xs font-medium"
+                        >
+                          Categorize
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -283,6 +290,14 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
         </div>
         </section>
       </main>
+      {categorizeTransaction && billId && (
+        <CategorizationModal
+          billId={billId}
+          initialTransaction={categorizeTransaction}
+          onClose={() => setCategorizeTransaction(null)}
+          onSaved={fetchTransactions}
+        />
+      )}
     </div>
   );
 }
