@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { BillTransactionsResponse, TransactionListResponse, Transaction } from "@/types";
 import { CategorizationModal } from "@/components/CategorizationModal";
@@ -29,6 +29,22 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
   const [summary, setSummary] = useState<BillSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
   const [categorizeTransaction, setCategorizeTransaction] = useState<Transaction | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [showInstallments, setShowInstallments] = useState(false);
+  const [showLastInstallment, setShowLastInstallment] = useState(false);
+  const [showRefunds, setShowRefunds] = useState(false);
+  const [showUncategorized, setShowUncategorized] = useState(false);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const hasActiveFilters = searchInput || showInstallments || showLastInstallment || showRefunds || showUncategorized;
 
   useEffect(() => {
     async function loadParams() {
@@ -50,6 +66,22 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
         sortOrder,
       });
 
+      if (debouncedSearch.trim()) {
+        queryParams.set("search", debouncedSearch.trim());
+      }
+      if (showInstallments) {
+        queryParams.set("installments", "true");
+      }
+      if (showLastInstallment) {
+        queryParams.set("lastInstallment", "true");
+      }
+      if (showRefunds) {
+        queryParams.set("refunds", "true");
+      }
+      if (showUncategorized) {
+        queryParams.set("uncategorized", "true");
+      }
+
       const response = await fetch(`/api/bills/${billId}/transactions?${queryParams}`);
       const result: BillTransactionsResponse = await response.json();
 
@@ -65,11 +97,19 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
     } finally {
       setIsLoading(false);
     }
-  }, [billId, pagination.page, pagination.limit, sortBy, sortOrder]);
+  }, [billId, pagination.page, pagination.limit, sortBy, sortOrder, debouncedSearch, showInstallments, showLastInstallment, showRefunds, showUncategorized]);
 
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setPagination((p) => ({ ...p, page: 1 }));
+  }, [debouncedSearch, showInstallments, showLastInstallment, showRefunds, showUncategorized]);
 
   useEffect(() => {
     if (!billId) return;
@@ -209,12 +249,88 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
           ) : null}
         </section>
 
+        <section className="mb-6">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <input
+                type="text"
+                placeholder="Search transactions..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full px-3 py-1.5 pl-8 text-sm bg-zinc-800 border border-zinc-700 rounded text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
+              />
+              <svg
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <button
+              onClick={() => setShowInstallments((v) => !v)}
+              className={`px-3 py-1.5 text-sm rounded border transition-colors ${
+                showInstallments
+                  ? "bg-blue-600 border-blue-500 text-white"
+                  : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700"
+              }`}
+            >
+              Installments
+            </button>
+            <button
+              onClick={() => setShowLastInstallment((v) => !v)}
+              className={`px-3 py-1.5 text-sm rounded border transition-colors ${
+                showLastInstallment
+                  ? "bg-blue-600 border-blue-500 text-white"
+                  : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700"
+              }`}
+            >
+              Last Installment
+            </button>
+            <button
+              onClick={() => setShowRefunds((v) => !v)}
+              className={`px-3 py-1.5 text-sm rounded border transition-colors ${
+                showRefunds
+                  ? "bg-blue-600 border-blue-500 text-white"
+                  : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700"
+              }`}
+            >
+              Refunds
+            </button>
+            <button
+              onClick={() => setShowUncategorized((v) => !v)}
+              className={`px-3 py-1.5 text-sm rounded border transition-colors ${
+                showUncategorized
+                  ? "bg-blue-600 border-blue-500 text-white"
+                  : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700"
+              }`}
+            >
+              Uncategorized
+            </button>
+            {hasActiveFilters && (
+              <button
+                onClick={() => {
+                  setSearchInput("");
+                  setShowInstallments(false);
+                  setShowLastInstallment(false);
+                  setShowRefunds(false);
+                  setShowUncategorized(false);
+                }}
+                className="px-3 py-1.5 text-sm rounded border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </section>
+
         <section>
           <h2 className="text-lg font-medium text-zinc-200 mb-4">Transactions</h2>
           <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-x-auto">
           {(data?.length === 0) && !isLoading ? (
             <div className="text-center py-8 text-zinc-500">
-              No transactions for this bill.
+              {hasActiveFilters ? "No transactions match your filters." : "No transactions for this bill."}
             </div>
           ) : (
             <table className="w-full border-collapse">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 
 export async function GET(
   request: NextRequest,
@@ -12,6 +13,11 @@ export async function GET(
     const limit = parseInt(searchParams.get("limit") ?? "20", 10);
     const sortBy = searchParams.get("sortBy") ?? "date";
     const sortOrder = searchParams.get("sortOrder") ?? "desc";
+    const search = searchParams.get("search");
+    const installments = searchParams.get("installments") === "true";
+    const lastInstallment = searchParams.get("lastInstallment") === "true";
+    const refunds = searchParams.get("refunds") === "true";
+    const uncategorized = searchParams.get("uncategorized") === "true";
 
     const bill = await prisma.bill.findUnique({
       where: { id: billId },
@@ -31,17 +37,50 @@ export async function GET(
     const orderByDirection =
       sortOrder === "asc" ? ("asc" as const) : ("desc" as const);
 
+    const where: Prisma.TransactionWhereInput = { billId };
+
+    if (search) {
+      where.OR = [
+        { description: { contains: search } },
+        { category: { name: { contains: search } } },
+      ];
+    }
+
+    if (refunds) {
+      where.amount = { lt: 0 };
+    }
+
+    if (uncategorized) {
+      where.categoryId = null;
+    }
+
+    let installmentIds: number[] | undefined;
+
+    if (lastInstallment) {
+      const rows = await prisma.$queryRaw<{ id: number }[]>(
+        Prisma.sql`SELECT id FROM "Transaction" WHERE "billId" = ${billId} AND "installmentNumber" IS NOT NULL AND "totalInstallments" IS NOT NULL AND "installmentNumber" = "totalInstallments"`
+      );
+      installmentIds = rows.map((r) => r.id);
+    } else if (installments) {
+      const rows = await prisma.$queryRaw<{ id: number }[]>(
+        Prisma.sql`SELECT id FROM "Transaction" WHERE "billId" = ${billId} AND "installmentNumber" IS NOT NULL`
+      );
+      installmentIds = rows.map((r) => r.id);
+    }
+
+    if (installmentIds !== undefined) {
+      where.id = { in: installmentIds };
+    }
+
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
-        where: { billId },
+        where,
         skip,
         take: limit,
         orderBy: { [orderByField]: orderByDirection },
         include: { category: true },
       }),
-      prisma.transaction.count({
-        where: { billId },
-      }),
+      prisma.transaction.count({ where }),
     ]);
 
     const data = transactions.map((t) => ({
