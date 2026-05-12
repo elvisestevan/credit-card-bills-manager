@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 interface FileUploadProps {
   onUploadComplete: () => void;
@@ -15,6 +16,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
   const [billMonthYear, setBillMonthYear] = useState("");
   const [billError, setBillError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const validateBillMonthYear = (value: string) => {
     if (!value) {
@@ -87,6 +89,9 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
         });
         setBillMonthYear("");
         onUploadComplete();
+        if (result.importId && result.billId) {
+          router.push(`/import/${result.importId}/review?billId=${result.billId}`);
+        }
       }
     } catch {
       setMessage({ type: "error", text: "Network error. Please try again." });

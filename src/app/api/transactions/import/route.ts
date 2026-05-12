@@ -107,6 +107,8 @@ export async function POST(request: NextRequest) {
 
     const skipped = transactions.length - newTransactions.length;
 
+    const batchImportId = crypto.randomUUID();
+
     if (newTransactions.length > 0) {
       await prisma.transaction.createMany({
         data: newTransactions.map((t) => ({
@@ -115,7 +117,7 @@ export async function POST(request: NextRequest) {
           amount: new Prisma.Decimal(t.amount),
           installmentNumber: t.installmentNumber,
           totalInstallments: t.totalInstallments,
-          importId: crypto.randomUUID(),
+          importId: batchImportId,
           billId: bill.id,
         })),
       });
@@ -126,6 +128,9 @@ export async function POST(request: NextRequest) {
       added: newTransactions.length,
       ignored: skipped,
       errors: parseErrors,
+      importId: batchImportId,
+      billId: bill.id,
+      billMonthYear,
     });
   } catch (error) {
     console.error("Import error:", error);

@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, cleanup, fireEvent } from "@testing-library/react";
 import { FileUpload } from "../FileUpload";
 
+const mockPush = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
+
 describe("FileUpload", () => {
   const mockOnUploadComplete = vi.fn();
 
@@ -87,7 +93,7 @@ describe("FileUpload", () => {
             () =>
               resolve({
                 ok: true,
-                json: () => Promise.resolve({ added: 1, ignored: 0 }),
+                json: () => Promise.resolve({ added: 1, ignored: 0, importId: "test-import-id", billId: "test-bill-id" }),
               }),
             100
           )
@@ -112,7 +118,7 @@ describe("FileUpload", () => {
   it("successfully uploads CSV file with bill ID", async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ added: 2, ignored: 0 }),
+      json: () => Promise.resolve({ added: 2, ignored: 0, importId: "test-import-id", billId: "test-bill-id" }),
     });
 
     render(<FileUpload onUploadComplete={mockOnUploadComplete} />);
@@ -140,7 +146,7 @@ describe("FileUpload", () => {
   it("shows success message with skipped duplicates", async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ added: 1, ignored: 1 }),
+      json: () => Promise.resolve({ added: 1, ignored: 1, importId: "test-import-id", billId: "test-bill-id" }),
     });
 
     render(<FileUpload onUploadComplete={mockOnUploadComplete} />);
@@ -163,7 +169,7 @@ describe("FileUpload", () => {
   it("calls onUploadComplete after successful upload", async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ added: 1, ignored: 0 }),
+      json: () => Promise.resolve({ added: 1, ignored: 0, importId: "test-import-id", billId: "test-bill-id" }),
     });
 
     render(<FileUpload onUploadComplete={mockOnUploadComplete} />);
@@ -180,6 +186,10 @@ describe("FileUpload", () => {
 
     await waitFor(() => {
       expect(mockOnUploadComplete).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/import/test-import-id/review?billId=test-bill-id");
     });
   });
 
