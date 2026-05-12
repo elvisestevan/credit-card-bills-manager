@@ -14,6 +14,12 @@ vi.mock("@/lib/db", () => ({
   prisma: mockPrisma,
 }));
 
+vi.mock("@/generated/prisma/client", () => ({
+  Prisma: {
+    sql: vi.fn(),
+  },
+}));
+
 describe("GET /api/bills/[billId]/transactions", async () => {
   const { GET } = await import("../route");
 
