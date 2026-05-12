@@ -5,6 +5,17 @@ import { useParams, useRouter } from "next/navigation";
 import { CategoryDropdown } from "@/components/CategoryDropdown";
 import { SimilarTransactionsModal } from "@/components/SimilarTransactionsModal";
 
+interface ImportTransaction {
+  id: number;
+  date: string;
+  description: string;
+  amount: string;
+  installmentNumber: number | null;
+  totalInstallments: number | null;
+  suggestedCategoryId: number | null;
+  suggestedCategoryName: string | null;
+}
+
 export default function ImportReviewPage() {
   const params = useParams();
   const router = useRouter();
@@ -59,12 +70,10 @@ export default function ImportReviewPage() {
     return null;
   };
 
-  const getEffectiveCategoryName = (t: ImportTransaction) => {
+  const getEffectiveCategoryName = (t: ImportTransaction): string | undefined => {
     const selection = categorySelections[t.id];
-    if (selection) {
-      if (selection.categoryName) return selection.categoryName;
-      if (selection.categoryId !== null) return null;
-      return undefined;
+    if (selection && selection.categoryName) {
+      return selection.categoryName;
     }
     return undefined;
   };
