@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
-    exclude: ["node_modules", "dist"],
+    exclude: ["node_modules", "dist", "src/**/*.integration.test.ts"],
     pool: "forks",
     setupFiles: ["./vitest.setup.ts"],
   },
@@ -21,7 +21,7 @@ export const apiTestConfig = defineConfig({
   test: {
     environment: "node",
     include: ["src/app/api/**/*.test.ts"],
-    exclude: ["node_modules", "dist"],
+    exclude: ["node_modules", "dist", "src/**/*.integration.test.ts"],
     pool: "forks",
   },
   resolve: {

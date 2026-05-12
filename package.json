@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "test:integration": "INTEGRATION_DATABASE_URL=file:./test.db vitest --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.2",
