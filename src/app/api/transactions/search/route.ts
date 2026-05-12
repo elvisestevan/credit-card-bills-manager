@@ -29,7 +29,15 @@ export async function GET(request: NextRequest) {
 
     const transactions = await prisma.transaction.findMany({
       where,
-      select: { id: true, description: true, date: true, amount: true, installmentNumber: true, totalInstallments: true },
+      select: {
+        id: true,
+        description: true,
+        date: true,
+        amount: true,
+        installmentNumber: true,
+        totalInstallments: true,
+        category: { select: { name: true } },
+      },
     });
 
     const normalizedDescription = description.toLowerCase();

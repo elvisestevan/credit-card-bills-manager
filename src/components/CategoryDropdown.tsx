@@ -8,9 +8,10 @@ interface CategoryDropdownProps {
   onChange: (categoryId: number | null, categoryName?: string) => void;
   refreshKey?: number;
   categoryName?: string;
+  suggestedCategory?: { id: number; name: string } | null;
 }
 
-export function CategoryDropdown({ value, onChange, refreshKey, categoryName }: CategoryDropdownProps) {
+export function CategoryDropdown({ value, onChange, refreshKey, categoryName, suggestedCategory }: CategoryDropdownProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -38,6 +39,15 @@ export function CategoryDropdown({ value, onChange, refreshKey, categoryName }: 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const hasAutoSelected = useRef(false);
+
+  useEffect(() => {
+    if (!value && suggestedCategory && !hasAutoSelected.current) {
+      onChange(suggestedCategory.id);
+      hasAutoSelected.current = true;
+    }
+  }, [suggestedCategory, value, onChange]);
 
   const selectedCategory = value
     ? categories.find((c) => c.id === value) || null
@@ -78,7 +88,14 @@ export function CategoryDropdown({ value, onChange, refreshKey, categoryName }: 
       <div className="flex items-center gap-2">
         {displayCategory ? (
           <div className="flex-1 flex items-center justify-between px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200">
-            <span>{displayCategory.name}</span>
+            <div className="flex items-center gap-2">
+              <span>{displayCategory.name}</span>
+              {suggestedCategory && value === suggestedCategory.id && (
+                <span className="text-xs text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                  Suggested
+                </span>
+              )}
+            </div>
             <button
               onClick={handleClear}
               className="text-zinc-400 hover:text-zinc-200"
