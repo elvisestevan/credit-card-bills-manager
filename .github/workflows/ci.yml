@@ -47,5 +47,6 @@ jobs:
         with:
           bun-version: latest
       - run: bun install
+      - run: DATABASE_URL="file:./test.db" bun --bun run prisma generate
       - run: DATABASE_URL="file:./test.db" bun --bun run prisma db push
       - run: INTEGRATION_DATABASE_URL="file:./test.db" bun run test:integration
