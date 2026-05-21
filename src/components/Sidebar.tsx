@@ -21,6 +21,26 @@ export function Sidebar() {
         <ul className="space-y-2">
           <li>
             <Link
+              href="/"
+              className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                isActive("/") && !pathname.startsWith("/bills") && !pathname.startsWith("/categorization")
+                  ? "bg-zinc-800 text-white"
+                  : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+              </svg>
+              Dashboard
+            </Link>
+          </li>
+          <li>
+            <Link
               href="/bills"
               className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
                 isActive("/bills")
