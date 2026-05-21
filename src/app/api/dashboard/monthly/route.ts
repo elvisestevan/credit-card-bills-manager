@@ -33,9 +33,32 @@ export async function GET(request: NextRequest) {
       0
     );
 
+    let latestTxnYear = 0;
+    let latestTxnMonth = 0;
+    for (const t of bill.transactions) {
+      const y = t.date.getFullYear();
+      const m = t.date.getMonth() + 1;
+      if (y > latestTxnYear || (y === latestTxnYear && m > latestTxnMonth)) {
+        latestTxnYear = y;
+        latestTxnMonth = m;
+      }
+    }
+
+    if (latestTxnMonth === 0) {
+      const [mStr, yStr] = bill.monthYear.split("-");
+      latestTxnMonth = parseInt(mStr, 10);
+      latestTxnYear = parseInt(yStr, 10);
+    }
+
+    const daysInMonth = new Date(latestTxnYear, latestTxnMonth, 0).getDate();
+
     const dailyMap = new Map<number, number>();
     for (const t of bill.transactions) {
-      const day = t.date.getDate();
+      const txnMonth = t.date.getMonth() + 1;
+      const day =
+        txnMonth === latestTxnMonth && t.date.getFullYear() === latestTxnYear
+          ? t.date.getDate()
+          : 1;
       dailyMap.set(day, (dailyMap.get(day) || 0) + (t.amount as Prisma.Decimal).toNumber());
     }
 
@@ -44,7 +67,7 @@ export async function GET(request: NextRequest) {
     const dailyCumulative = sortedDays.map((day) => {
       runningTotal += dailyMap.get(day) || 0;
       return {
-        date: `2026-${String(bill.monthYear.split("-")[0]).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+        date: `${latestTxnYear}-${String(latestTxnMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
         runningTotal,
         dayOfMonth: day,
       };
@@ -65,11 +88,6 @@ export async function GET(request: NextRequest) {
       count: data.count,
       percentage: totalAmount > 0 ? Math.round((data.total / totalAmount) * 1000) / 10 : 0,
     }));
-
-    const [monthStr, yearStr] = bill.monthYear.split("-");
-    const monthIndex = parseInt(monthStr, 10) - 1;
-    const year = parseInt(yearStr, 10);
-    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
 
     const lastTransaction =
       bill.transactions.length > 0
