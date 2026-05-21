@@ -147,12 +147,19 @@ export function CategoryBreakdownBarChart({ data }: CategoryBreakdownBarProps) {
             domain={[0, "auto"]}
           />
           <Legend
-            wrapperStyle={{ fontSize: "12px", color: "#a1a1aa" }}
-            payload={allUniqueCategories.map((name) => ({
-              value: name,
-              type: "rect",
-              color: getColor(name),
-            }))}
+            content={() => (
+              <ul className="flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-zinc-400 mt-2">
+                {allUniqueCategories.map((name) => (
+                  <li key={name} className="flex items-center gap-1.5">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-sm"
+                      style={{ backgroundColor: getColor(name) }}
+                    />
+                    {name}
+                  </li>
+                ))}
+              </ul>
+            )}
           />
           <Bar
             dataKey="total"
