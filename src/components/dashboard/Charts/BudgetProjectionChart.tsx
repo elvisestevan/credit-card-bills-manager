@@ -94,10 +94,10 @@ export function BudgetProjectionChart({
               borderRadius: "8px",
               color: "#e4e4e7",
             }}
-            formatter={(value: unknown, name: string) => {
+            formatter={((value: unknown, name: string) => {
               if (value === null || value === undefined) return ["N/A", name];
               return [formatCurrency(Number(value)), name === "cumulativeSpending" ? "Cumulative" : "Prorated Budget"];
-            }}
+            }) as any}
           />
           <ReferenceLine
             y={budgetGoal}
