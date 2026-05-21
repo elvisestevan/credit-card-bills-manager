@@ -165,7 +165,7 @@ export function CategoryBreakdownBarChart({ data }: CategoryBreakdownBarProps) {
             dataKey="total"
             isAnimationActive={false}
             shape={(barProps) => {
-              const p = barProps as Record<string, unknown>;
+              const p = barProps as unknown as Record<string, unknown>;
               const x = p.x as number;
               const y = p.y as number;
               const width = p.width as number;
