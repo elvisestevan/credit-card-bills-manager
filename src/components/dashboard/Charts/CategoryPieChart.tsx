@@ -97,7 +97,10 @@ export function CategoryPieChart({ data, selectedCategory, onSelectCategory }: C
               borderRadius: "8px",
               color: "#e4e4e7",
             }}
-            formatter={(value: number, name: string) => [formatCurrency(value), name]}
+            formatter={(value, name) => {
+              if (value == null) return ["N/A", name as string];
+              return [formatCurrency(Number(value)), name as string];
+            }}
           />
         </PieChart>
       </ResponsiveContainer>

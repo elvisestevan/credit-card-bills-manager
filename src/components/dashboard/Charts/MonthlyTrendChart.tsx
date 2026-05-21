@@ -45,7 +45,10 @@ export function MonthlyTrendChart({ data }: MonthlyTrendProps) {
               borderRadius: "8px",
               color: "#e4e4e7",
             }}
-            formatter={(value: number) => [formatCurrency(value), "Total"]}
+            formatter={(value) => {
+              if (value == null) return ["N/A", "Total"];
+              return [formatCurrency(Number(value)), "Total"];
+            }}
           />
           <Line
             type="monotone"

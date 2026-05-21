@@ -49,7 +49,10 @@ export function CategoryTrendChart({ categoryName, data }: CategoryTrendProps) {
               borderRadius: "8px",
               color: "#e4e4e7",
             }}
-            formatter={(value: number) => [formatCurrency(value), categoryName]}
+            formatter={(value) => {
+              if (value == null) return ["N/A", categoryName];
+              return [formatCurrency(Number(value)), categoryName];
+            }}
           />
           <Line
             type="monotone"
