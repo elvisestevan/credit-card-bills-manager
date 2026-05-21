@@ -78,7 +78,7 @@ export function CategoryPieChart({ data, selectedCategory, onSelectCategory }: C
             outerRadius={100}
             innerRadius={50}
             cursor="pointer"
-            onClick={(entry) => handleClick(entry as CategoryData)}
+            onClick={(entry) => handleClick(entry as unknown as CategoryData)}
           >
             {data.map((entry, index) => (
               <Cell
