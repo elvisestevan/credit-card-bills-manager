@@ -164,14 +164,13 @@ export function CategoryBreakdownBarChart({ data }: CategoryBreakdownBarProps) {
           <Bar
             dataKey="total"
             isAnimationActive={false}
-            shape={(barProps: Record<string, unknown>) => {
-              const { x, y, width, height, payload } = barProps as {
-                x: number;
-                y: number;
-                width: number;
-                height: number;
-                payload: { monthYear: string };
-              };
+            shape={(barProps) => {
+              const p = barProps as Record<string, unknown>;
+              const x = p.x as number;
+              const y = p.y as number;
+              const width = p.width as number;
+              const height = p.height as number;
+              const payload = p.payload as { monthYear: string };
 
               const entry = processedData.find(
                 (d) => d.monthYear === payload.monthYear
