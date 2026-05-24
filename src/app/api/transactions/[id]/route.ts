@@ -10,7 +10,7 @@ export async function PATCH(
     const body = await request.json();
     const { categoryId, categoryName } = body;
 
-    let finalCategoryId: number;
+    let finalCategoryId: number | null;
 
     if (categoryName) {
       const normalizedName = categoryName.trim().toLowerCase();
@@ -22,6 +22,8 @@ export async function PATCH(
       });
 
       finalCategoryId = category.id;
+    } else if (categoryId === null) {
+      finalCategoryId = null;
     } else if (categoryId) {
       const existingCategory = await prisma.category.findUnique({
         where: { id: categoryId },

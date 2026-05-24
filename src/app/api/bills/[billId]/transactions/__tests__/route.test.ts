@@ -131,4 +131,38 @@ describe("GET /api/bills/[billId]/transactions", async () => {
       })
     );
   });
+
+  it("should filter by categoryId", async () => {
+    const mockBill = { id: "bill1", monthYear: "04-2026" };
+
+    mockPrisma.bill.findUnique.mockResolvedValueOnce(mockBill);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
+    mockPrisma.transaction.count.mockResolvedValueOnce(0);
+
+    const request = new Request("http://localhost:3000/api/bills/bill1/transactions?categoryId=5");
+    await GET(request, { params: Promise.resolve({ billId: "bill1" }) });
+
+    expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { billId: "bill1", categoryId: 5 },
+      })
+    );
+  });
+
+  it("should filter by categoryId=null for uncategorized", async () => {
+    const mockBill = { id: "bill1", monthYear: "04-2026" };
+
+    mockPrisma.bill.findUnique.mockResolvedValueOnce(mockBill);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
+    mockPrisma.transaction.count.mockResolvedValueOnce(0);
+
+    const request = new Request("http://localhost:3000/api/bills/bill1/transactions?categoryId=null");
+    await GET(request, { params: Promise.resolve({ billId: "bill1" }) });
+
+    expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { billId: "bill1", categoryId: null },
+      })
+    );
+  });
 });
