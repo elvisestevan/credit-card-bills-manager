@@ -18,6 +18,7 @@ export async function GET(
     const lastInstallment = searchParams.get("lastInstallment") === "true";
     const refunds = searchParams.get("refunds") === "true";
     const uncategorized = searchParams.get("uncategorized") === "true";
+    const categoryIdFilter = searchParams.get("categoryId");
 
     const bill = await prisma.bill.findUnique({
       where: { id: billId },
@@ -52,6 +53,17 @@ export async function GET(
 
     if (uncategorized) {
       where.categoryId = null;
+    }
+
+    if (categoryIdFilter) {
+      if (categoryIdFilter === "null") {
+        where.categoryId = null;
+      } else {
+        const parsedId = parseInt(categoryIdFilter, 10);
+        if (!isNaN(parsedId)) {
+          where.categoryId = parsedId;
+        }
+      }
     }
 
     let installmentIds: number[] | undefined;

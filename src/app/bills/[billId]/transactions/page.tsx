@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { BillTransactionsResponse, TransactionListResponse, Transaction } from "@/types";
-import { CategorizationModal } from "@/components/CategorizationModal";
+import { BillTransactionsResponse, TransactionListResponse, Category } from "@/types";
+import { CategoryDropdown } from "@/components/CategoryDropdown";
 
 interface BillTransactionsPageProps {
   params: Promise<{ billId: string }>;
@@ -28,14 +28,13 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
   const [isLoading, setIsLoading] = useState(true);
   const [summary, setSummary] = useState<BillSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
-  const [categorizeTransaction, setCategorizeTransaction] = useState<Transaction | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showInstallments, setShowInstallments] = useState(false);
   const [showLastInstallment, setShowLastInstallment] = useState(false);
   const [showRefunds, setShowRefunds] = useState(false);
-  const [showUncategorized, setShowUncategorized] = useState(false);
-  const isFirstRender = useRef(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -44,7 +43,18 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const hasActiveFilters = searchInput || showInstallments || showLastInstallment || showRefunds || showUncategorized;
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCategories(data);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const hasActiveFilters = searchInput || showInstallments || showLastInstallment || showRefunds || categoryFilter !== "";
 
   useEffect(() => {
     async function loadParams() {
@@ -78,8 +88,8 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
       if (showRefunds) {
         queryParams.set("refunds", "true");
       }
-      if (showUncategorized) {
-        queryParams.set("uncategorized", "true");
+      if (categoryFilter) {
+        queryParams.set("categoryId", categoryFilter);
       }
 
       const response = await fetch(`/api/bills/${billId}/transactions?${queryParams}`);
@@ -97,19 +107,15 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
     } finally {
       setIsLoading(false);
     }
-  }, [billId, pagination.page, pagination.limit, sortBy, sortOrder, debouncedSearch, showInstallments, showLastInstallment, showRefunds, showUncategorized]);
+  }, [billId, pagination.page, pagination.limit, sortBy, sortOrder, debouncedSearch, showInstallments, showLastInstallment, showRefunds, categoryFilter]);
 
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
     setPagination((p) => ({ ...p, page: 1 }));
-  }, [debouncedSearch, showInstallments, showLastInstallment, showRefunds, showUncategorized]);
+  }, [debouncedSearch, showInstallments, showLastInstallment, showRefunds, categoryFilter]);
 
   useEffect(() => {
     if (!billId) return;
@@ -157,6 +163,40 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
   const getAmountClass = (amount: string) => {
     const num = parseFloat(amount);
     return num < 0 ? "text-green-400" : "text-red-400";
+  };
+
+  const handleCategoryChange = async (
+    transactionId: number,
+    categoryId: number | null,
+    categoryName?: string
+  ) => {
+    try {
+      const body: { categoryId?: number | null; categoryName?: string } = {};
+      if (categoryName) {
+        body.categoryName = categoryName;
+      } else {
+        body.categoryId = categoryId;
+      }
+
+      const response = await fetch(`/api/transactions/${transactionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        const updated = await response.json();
+        setData((prev) =>
+          prev.map((t) =>
+            t.id === transactionId
+              ? { ...t, categoryId: updated.categoryId, categoryName: updated.categoryName }
+              : t
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update category:", error);
+    }
   };
 
   const totalPages = Math.ceil(pagination.total / pagination.limit);
@@ -298,16 +338,19 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
             >
               Refunds
             </button>
-            <button
-              onClick={() => setShowUncategorized((v) => !v)}
-              className={`px-3 py-1.5 text-sm rounded border transition-colors ${
-                showUncategorized
-                  ? "bg-blue-600 border-blue-500 text-white"
-                  : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700"
-              }`}
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-1.5 text-sm rounded border bg-zinc-800 border-zinc-700 text-zinc-200 focus:outline-none focus:border-zinc-500"
             >
-              Uncategorized
-            </button>
+              <option value="">All categories</option>
+              <option value="null">Uncategorized</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id.toString()}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
             {hasActiveFilters && (
               <button
                 onClick={() => {
@@ -315,7 +358,7 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
                   setShowInstallments(false);
                   setShowLastInstallment(false);
                   setShowRefunds(false);
-                  setShowUncategorized(false);
+                  setCategoryFilter("");
                 }}
                 className="px-3 py-1.5 text-sm rounded border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
               >
@@ -327,7 +370,7 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
 
         <section>
           <h2 className="text-lg font-medium text-zinc-200 mb-4">Transactions</h2>
-          <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-x-auto">
+          <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-visible">
           {(data?.length === 0) && !isLoading ? (
             <div className="text-center py-8 text-zinc-500">
               {hasActiveFilters ? "No transactions match your filters." : "No transactions for this bill."}
@@ -378,15 +421,14 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
                         ? `${transaction.installmentNumber}/${transaction.totalInstallments}`
                         : "-"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-300">
-                      {transaction.categoryName || (
-                        <button
-                          onClick={() => setCategorizeTransaction(transaction as Transaction)}
-                          className="text-yellow-400 hover:text-yellow-300 text-xs font-medium"
-                        >
-                          Categorize
-                        </button>
-                      )}
+                    <td className="px-4 py-3 text-sm text-zinc-300 min-w-[200px]">
+                      <CategoryDropdown
+                        value={transaction.categoryId}
+                        categoryName={transaction.categoryName || undefined}
+                        onChange={(categoryId, categoryName) =>
+                          handleCategoryChange(transaction.id, categoryId, categoryName)
+                        }
+                      />
                     </td>
                   </tr>
                 ))}
@@ -420,14 +462,6 @@ export default function BillTransactionsPage({ params }: BillTransactionsPagePro
         </div>
         </section>
       </main>
-      {categorizeTransaction && billId && (
-        <CategorizationModal
-          billId={billId}
-          initialTransaction={categorizeTransaction}
-          onClose={() => setCategorizeTransaction(null)}
-          onSaved={fetchTransactions}
-        />
-      )}
     </div>
   );
 }
