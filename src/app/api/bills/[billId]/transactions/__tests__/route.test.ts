@@ -44,13 +44,16 @@ describe("GET /api/bills/[billId]/transactions", async () => {
       monthYear: "04-2026",
     };
     const mockTransactions = [
-      { id: 1, date: new Date("2024-01-02"), description: "Test2", amount: { toString: () => "-100" }, cardName: null, installmentNumber: null, totalInstallments: null },
-      { id: 2, date: new Date("2024-01-01"), description: "Test1", amount: { toString: () => "-50" }, cardName: null, installmentNumber: null, totalInstallments: null },
+      { id: 1, date: new Date("2024-01-02"), description: "Test2", amount: { toString: () => "-100" }, cardName: null, installmentNumber: null, totalInstallments: null, categoryId: null, category: null },
+      { id: 2, date: new Date("2024-01-01"), description: "Test1", amount: { toString: () => "-50" }, cardName: null, installmentNumber: null, totalInstallments: null, categoryId: null, category: null },
     ];
 
     mockPrisma.bill.findUnique.mockResolvedValueOnce(mockBill);
     mockPrisma.transaction.findMany.mockResolvedValueOnce(mockTransactions);
     mockPrisma.transaction.count.mockResolvedValueOnce(2);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce(
+      mockTransactions.map((t) => ({ amount: t.amount, installmentNumber: t.installmentNumber, totalInstallments: t.totalInstallments }))
+    );
 
     const request = new Request("http://localhost:3000/api/bills/bill1/transactions");
     const response = await GET(request, { params: Promise.resolve({ billId: "bill1" }) });
@@ -60,6 +63,8 @@ describe("GET /api/bills/[billId]/transactions", async () => {
     expect(data.bill).toEqual({ id: "bill1", monthYear: "04-2026" });
     expect(data.data).toHaveLength(2);
     expect(data.pagination).toEqual({ page: 1, limit: 20, total: 2 });
+    expect(data.summary).toBeDefined();
+    expect(data.summary.totalTransactions).toBe(2);
   });
 
   it("should handle custom page and limit", async () => {
@@ -68,6 +73,7 @@ describe("GET /api/bills/[billId]/transactions", async () => {
     mockPrisma.bill.findUnique.mockResolvedValueOnce(mockBill);
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/bills/bill1/transactions?page=3&limit=50");
     await GET(request, { params: Promise.resolve({ billId: "bill1" }) });
@@ -87,6 +93,7 @@ describe("GET /api/bills/[billId]/transactions", async () => {
     mockPrisma.bill.findUnique.mockResolvedValueOnce(mockBill);
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/bills/bill1/transactions");
     await GET(request, { params: Promise.resolve({ billId: "bill1" }) });
@@ -104,6 +111,7 @@ describe("GET /api/bills/[billId]/transactions", async () => {
     mockPrisma.bill.findUnique.mockResolvedValueOnce(mockBill);
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/bills/bill1/transactions?sortBy=amount&sortOrder=asc");
     await GET(request, { params: Promise.resolve({ billId: "bill1" }) });
@@ -121,6 +129,7 @@ describe("GET /api/bills/[billId]/transactions", async () => {
     mockPrisma.bill.findUnique.mockResolvedValueOnce(mockBill);
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/bills/bill1/transactions");
     await GET(request, { params: Promise.resolve({ billId: "bill1" }) });
@@ -138,6 +147,7 @@ describe("GET /api/bills/[billId]/transactions", async () => {
     mockPrisma.bill.findUnique.mockResolvedValueOnce(mockBill);
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/bills/bill1/transactions?categoryId=5");
     await GET(request, { params: Promise.resolve({ billId: "bill1" }) });
@@ -155,6 +165,7 @@ describe("GET /api/bills/[billId]/transactions", async () => {
     mockPrisma.bill.findUnique.mockResolvedValueOnce(mockBill);
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/bills/bill1/transactions?categoryId=null");
     await GET(request, { params: Promise.resolve({ billId: "bill1" }) });

@@ -20,11 +20,14 @@ describe("GET /api/transactions", async () => {
 
   it("should return default pagination and sorted by date desc", async () => {
     const mockTransactions = [
-      { id: 1, date: new Date("2024-01-02"), description: "Test2", amount: { toString: () => "-100" }, cardName: null, installmentNumber: null, totalInstallments: null },
-      { id: 2, date: new Date("2024-01-01"), description: "Test1", amount: { toString: () => "-50" }, cardName: null, installmentNumber: null, totalInstallments: null },
+      { id: 1, date: new Date("2024-01-02"), description: "Test2", amount: { toString: () => "-100" }, cardName: null, installmentNumber: null, totalInstallments: null, categoryId: null, category: null, billId: "bill1", bill: { monthYear: "01-2024" } },
+      { id: 2, date: new Date("2024-01-01"), description: "Test1", amount: { toString: () => "-50" }, cardName: null, installmentNumber: null, totalInstallments: null, categoryId: null, category: null, billId: "bill2", bill: { monthYear: "02-2024" } },
     ];
     mockPrisma.transaction.findMany.mockResolvedValueOnce(mockTransactions);
     mockPrisma.transaction.count.mockResolvedValueOnce(2);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce(
+      mockTransactions.map((t) => ({ amount: t.amount, installmentNumber: t.installmentNumber, totalInstallments: t.totalInstallments }))
+    );
 
     const request = new Request("http://localhost:3000/api/transactions");
     const response = await GET(request);
@@ -33,6 +36,10 @@ describe("GET /api/transactions", async () => {
     expect(response.status).toBe(200);
     expect(data.data).toHaveLength(2);
     expect(data.pagination).toEqual({ page: 1, limit: 20, total: 2 });
+    expect(data.summary).toBeDefined();
+    expect(data.summary.totalTransactions).toBe(2);
+    expect(data.summary.totalValue).toBe(-150);
+    expect(data.summary.totalInstallmentTransactions).toBe(0);
     expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         skip: 0,
@@ -45,6 +52,7 @@ describe("GET /api/transactions", async () => {
   it("should handle custom page and limit", async () => {
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/transactions?page=3&limit=50");
     await GET(request);
@@ -60,6 +68,7 @@ describe("GET /api/transactions", async () => {
   it("should sort by amount ascending", async () => {
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/transactions?sortBy=amount&sortOrder=asc");
     await GET(request);
@@ -74,6 +83,7 @@ describe("GET /api/transactions", async () => {
   it("should fall back to date sort for invalid sort field", async () => {
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/transactions?sortBy=invalid&sortOrder=asc");
     await GET(request);
@@ -88,6 +98,7 @@ describe("GET /api/transactions", async () => {
   it("should use defaults for page=1 and limit=20 when not provided", async () => {
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/transactions");
     await GET(request);
@@ -103,6 +114,7 @@ describe("GET /api/transactions", async () => {
   it("should return empty array when no transactions", async () => {
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/transactions");
     const response = await GET(request);
@@ -111,14 +123,19 @@ describe("GET /api/transactions", async () => {
     expect(response.status).toBe(200);
     expect(data.data).toHaveLength(0);
     expect(data.pagination.total).toBe(0);
+    expect(data.summary).toBeDefined();
+    expect(data.summary.totalTransactions).toBe(0);
   });
 
   it("should transform transactions correctly", async () => {
     const mockTransactions = [
-      { id: 1, date: new Date("2024-01-01"), description: "Test", amount: { toString: () => "-100.50" }, cardName: "Itau", installmentNumber: 1, totalInstallments: 3 },
+      { id: 1, date: new Date("2024-01-01"), description: "Test", amount: { toString: () => "-100.50" }, cardName: "Itau", installmentNumber: 1, totalInstallments: 3, categoryId: null, category: null, billId: "bill1", bill: { monthYear: "01-2024" } },
     ];
     mockPrisma.transaction.findMany.mockResolvedValueOnce(mockTransactions);
     mockPrisma.transaction.count.mockResolvedValueOnce(1);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce(
+      mockTransactions.map((t) => ({ amount: t.amount, installmentNumber: t.installmentNumber, totalInstallments: t.totalInstallments }))
+    );
 
     const request = new Request("http://localhost:3000/api/transactions");
     const response = await GET(request);
@@ -132,12 +149,19 @@ describe("GET /api/transactions", async () => {
       cardName: "Itau",
       installmentNumber: 1,
       totalInstallments: 3,
+      categoryId: null,
+      categoryName: null,
+      billId: "bill1",
+      billMonthYear: "01-2024",
     });
+    expect(data.summary).toBeDefined();
+    expect(data.summary.totalTransactions).toBe(1);
   });
 
   it("should sort by description", async () => {
     mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
     mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
 
     const request = new Request("http://localhost:3000/api/transactions?sortBy=description");
     await GET(request);
