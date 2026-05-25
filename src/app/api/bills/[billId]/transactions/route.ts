@@ -84,7 +84,7 @@ export async function GET(
       where.id = { in: installmentIds };
     }
 
-    const [transactions, total] = await Promise.all([
+    const [transactions, total, summaryRows] = await Promise.all([
       prisma.transaction.findMany({
         where,
         skip,
@@ -93,6 +93,10 @@ export async function GET(
         include: { category: true },
       }),
       prisma.transaction.count({ where }),
+      prisma.transaction.findMany({
+        where,
+        select: { amount: true, installmentNumber: true, totalInstallments: true },
+      }),
     ]);
 
     const data = transactions.map((t) => ({
@@ -107,6 +111,21 @@ export async function GET(
       categoryName: t.category?.name || null,
     }));
 
+    const summary = {
+      totalTransactions: summaryRows.length,
+      totalValue: summaryRows.reduce((s, r) => s + Number(r.amount), 0),
+      totalInstallmentTransactions: summaryRows.filter((r) => r.installmentNumber !== null).length,
+      totalInstallmentValue: summaryRows
+        .filter((r) => r.installmentNumber !== null)
+        .reduce((s, r) => s + Number(r.amount), 0),
+      lastInstallmentCount: summaryRows.filter(
+        (r) => r.installmentNumber !== null && r.totalInstallments !== null && r.installmentNumber === r.totalInstallments
+      ).length,
+      lastInstallmentTotal: summaryRows
+        .filter((r) => r.installmentNumber !== null && r.totalInstallments !== null && r.installmentNumber === r.totalInstallments)
+        .reduce((s, r) => s + Number(r.amount), 0),
+    };
+
     return NextResponse.json({
       bill: {
         id: bill.id,
@@ -118,6 +137,7 @@ export async function GET(
         limit,
         total,
       },
+      summary,
     });
   } catch (error) {
     console.error("Get bill transactions error:", error);

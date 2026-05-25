@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,6 +11,9 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get("sortOrder") ?? "desc";
     const search = searchParams.get("search");
     const categoryId = searchParams.get("categoryId");
+    const installments = searchParams.get("installments") === "true";
+    const lastInstallment = searchParams.get("lastInstallment") === "true";
+    const refunds = searchParams.get("refunds") === "true";
 
     const skip = (page - 1) * limit;
 
@@ -18,27 +22,61 @@ export async function GET(request: NextRequest) {
     const orderByDirection =
       sortOrder === "asc" ? ("asc" as const) : ("desc" as const);
 
-    const where: {
-      description?: { contains: string };
-      categoryId?: number | null;
-    } = {};
+    const where: Prisma.TransactionWhereInput = {};
+
     if (search) {
-      where.description = { contains: search };
-    }
-    if (categoryId === "null") {
-      where.categoryId = null;
-    } else if (categoryId) {
-      where.categoryId = parseInt(categoryId, 10);
+      where.OR = [
+        { description: { contains: search } },
+        { category: { name: { contains: search } } },
+      ];
     }
 
-    const [transactions, total] = await Promise.all([
+    if (refunds) {
+      where.amount = { lt: 0 };
+    }
+
+    if (categoryId) {
+      if (categoryId === "null") {
+        where.categoryId = null;
+      } else {
+        const parsedId = parseInt(categoryId, 10);
+        if (!isNaN(parsedId)) {
+          where.categoryId = parsedId;
+        }
+      }
+    }
+
+    let installmentIds: number[] | undefined;
+
+    if (lastInstallment) {
+      const rows = await prisma.$queryRaw<{ id: number }[]>(
+        Prisma.sql`SELECT id FROM "Transaction" WHERE "installmentNumber" IS NOT NULL AND "totalInstallments" IS NOT NULL AND "installmentNumber" = "totalInstallments"`
+      );
+      installmentIds = rows.map((r) => r.id);
+    } else if (installments) {
+      const rows = await prisma.$queryRaw<{ id: number }[]>(
+        Prisma.sql`SELECT id FROM "Transaction" WHERE "installmentNumber" IS NOT NULL`
+      );
+      installmentIds = rows.map((r) => r.id);
+    }
+
+    if (installmentIds !== undefined) {
+      where.id = { in: installmentIds };
+    }
+
+    const [transactions, total, summaryRows] = await Promise.all([
       prisma.transaction.findMany({
         where,
         skip,
         take: limit,
         orderBy: { [orderByField]: orderByDirection },
+        include: { category: true, bill: true },
       }),
       prisma.transaction.count({ where }),
+      prisma.transaction.findMany({
+        where,
+        select: { amount: true, installmentNumber: true, totalInstallments: true },
+      }),
     ]);
 
     const data = transactions.map((t) => ({
@@ -49,7 +87,26 @@ export async function GET(request: NextRequest) {
       cardName: t.cardName,
       installmentNumber: t.installmentNumber,
       totalInstallments: t.totalInstallments,
+      categoryId: t.categoryId,
+      categoryName: t.category?.name || null,
+      billId: t.billId,
+      billMonthYear: t.bill.monthYear,
     }));
+
+    const summary = {
+      totalTransactions: summaryRows.length,
+      totalValue: summaryRows.reduce((s, r) => s + Number(r.amount), 0),
+      totalInstallmentTransactions: summaryRows.filter((r) => r.installmentNumber !== null).length,
+      totalInstallmentValue: summaryRows
+        .filter((r) => r.installmentNumber !== null)
+        .reduce((s, r) => s + Number(r.amount), 0),
+      lastInstallmentCount: summaryRows.filter(
+        (r) => r.installmentNumber !== null && r.totalInstallments !== null && r.installmentNumber === r.totalInstallments
+      ).length,
+      lastInstallmentTotal: summaryRows
+        .filter((r) => r.installmentNumber !== null && r.totalInstallments !== null && r.installmentNumber === r.totalInstallments)
+        .reduce((s, r) => s + Number(r.amount), 0),
+    };
 
     return NextResponse.json({
       data,
@@ -58,6 +115,7 @@ export async function GET(request: NextRequest) {
         limit,
         total,
       },
+      summary,
     });
   } catch (error) {
     console.error("List transactions error:", error);

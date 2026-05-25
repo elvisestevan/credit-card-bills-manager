@@ -12,6 +12,15 @@ export interface ImportResult {
   errors: string[];
 }
 
+export interface TransactionSummary {
+  totalTransactions: number;
+  totalValue: number;
+  totalInstallmentTransactions: number;
+  totalInstallmentValue: number;
+  lastInstallmentCount: number;
+  lastInstallmentTotal: number;
+}
+
 export interface TransactionListResponse {
   data: {
     id: number;
@@ -23,12 +32,15 @@ export interface TransactionListResponse {
     totalInstallments: number | null;
     categoryId: number | null;
     categoryName: string | null;
+    billId: string;
+    billMonthYear: string | null;
   }[];
   pagination: {
     page: number;
     limit: number;
     total: number;
   };
+  summary?: TransactionSummary;
 }
 
 export interface Bill {
@@ -67,6 +79,7 @@ export interface BillTransactionsResponse {
   };
   data: TransactionListResponse["data"];
   pagination: TransactionListResponse["pagination"];
+  summary?: TransactionSummary;
 }
 
 export interface ImportConflict {

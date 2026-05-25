@@ -23,7 +23,7 @@ export function Sidebar() {
             <Link
               href="/"
               className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                isActive("/") && !pathname.startsWith("/bills") && !pathname.startsWith("/categorization")
+                isActive("/") && !pathname.startsWith("/bills") && !pathname.startsWith("/categorization") && !pathname.startsWith("/transactions")
                   ? "bg-zinc-800 text-white"
                   : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
               }`}
@@ -61,6 +61,26 @@ export function Sidebar() {
                 />
               </svg>
               Bills
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/transactions"
+              className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                isActive("/transactions")
+                  ? "bg-zinc-800 text-white"
+                  : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M8 5a1 1 0 100 2h5a1 1 0 100-2H8zM3 5a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1zM8 9a1 1 0 100 2h5a1 1 0 100-2H8zM3 9a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1zM8 13a1 1 0 100 2h5a1 1 0 100-2H8zM3 13a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1z" />
+              </svg>
+              Transactions
             </Link>
           </li>
           <li>
