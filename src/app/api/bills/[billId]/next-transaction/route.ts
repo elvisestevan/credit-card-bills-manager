@@ -45,6 +45,7 @@ export async function GET(
       installmentNumber: transaction.installmentNumber,
       totalInstallments: transaction.totalInstallments,
       categoryId: transaction.categoryId,
+      transactionType: transaction.transactionType,
       remaining: total - skip - 1,
     });
   } catch (error) {

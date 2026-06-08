@@ -100,12 +100,18 @@ export default function CheckingAccountImportPage() {
   };
 
   const toggleItem = (index: number) => {
-    setItems((prev) => prev.map((i) => (i.index === index ? { ...i, selected: !i.selected } : i)));
+    setItems((prev) =>
+      prev.map((i) =>
+        i.index === index && !i.exists ? { ...i, selected: !i.selected } : i
+      )
+    );
   };
 
   const toggleAll = () => {
-    const allSelected = items.every((i) => i.selected);
-    setItems((prev) => prev.map((i) => ({ ...i, selected: !allSelected })));
+    const allSelected = items.every((i) => i.exists || i.selected);
+    setItems((prev) =>
+      prev.map((i) => (i.exists ? i : { ...i, selected: !allSelected }))
+    );
   };
 
   const getAmountClass = (amount: number) => (amount < 0 ? "text-green-400" : "text-red-400");
@@ -139,7 +145,8 @@ export default function CheckingAccountImportPage() {
     fileInputRef.current?.click();
   };
 
-  const hasData = items.length > 0;
+  const newItems = items.filter((i) => !i.exists);
+  const hasData = newItems.length > 0;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50">
@@ -220,12 +227,12 @@ export default function CheckingAccountImportPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
                 <h2 className="text-lg font-medium text-zinc-200">
-                  Preview ({items.length} transactions)
+                  Preview ({newItems.length} transactions)
                 </h2>
                 <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={items.every((i) => i.selected)}
+                    checked={newItems.every((i) => i.selected)}
                     onChange={toggleAll}
                     className="rounded border-zinc-600"
                   />
@@ -248,10 +255,10 @@ export default function CheckingAccountImportPage() {
                 </button>
                 <button
                   onClick={handleImport}
-                  disabled={isImporting || items.filter((i) => i.selected).length === 0}
+                  disabled={isImporting || newItems.filter((i) => i.selected).length === 0}
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium disabled:opacity-50 transition-colors"
                 >
-                  {isImporting ? "Importing..." : `Import Selected (${items.filter((i) => i.selected).length})`}
+                  {isImporting ? "Importing..." : `Import Selected (${newItems.filter((i) => i.selected).length})`}
                 </button>
               </div>
             </div>
@@ -275,7 +282,7 @@ export default function CheckingAccountImportPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item) => (
+                  {newItems.map((item) => (
                     <tr
                       key={item.index}
                       className={`border-b border-zinc-800 hover:bg-zinc-800/50 cursor-pointer ${
@@ -305,10 +312,10 @@ export default function CheckingAccountImportPage() {
             </div>
 
             <div className="mt-4 text-sm text-zinc-500">
-              {items.filter((i) => i.selected).length} of {items.length} selected
-              {items.filter((i) => !i.selected && i.amount <= 0).length > 0 && (
+              {newItems.filter((i) => i.selected).length} of {newItems.length} new transactions selected
+              {items.length > newItems.length && (
                 <span className="ml-2">
-                  ({items.filter((i) => !i.selected && i.amount <= 0).length} credit transactions auto-unselected)
+                  ({items.length - newItems.length} already imported — hidden)
                 </span>
               )}
             </div>

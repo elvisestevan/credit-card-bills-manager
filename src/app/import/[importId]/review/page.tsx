@@ -12,6 +12,7 @@ interface ImportTransaction {
   amount: string;
   installmentNumber: number | null;
   totalInstallments: number | null;
+  transactionType?: string;
   suggestedCategoryId: number | null;
   suggestedCategoryName: string | null;
 }
@@ -211,6 +212,7 @@ export default function ImportReviewPage() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Description</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Installments</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-zinc-400">Amount</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">Type</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Category</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">Actions</th>
               </tr>
@@ -227,6 +229,15 @@ export default function ImportReviewPage() {
                   </td>
                   <td className={`px-4 py-3 text-sm text-right font-medium ${getAmountClass(t.amount)}`}>
                     {formatAmount(t.amount)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                      t.transactionType === "checking_account"
+                        ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                        : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                    }`}>
+                      {t.transactionType === "checking_account" ? "Checking" : "Card"}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-sm min-w-[250px]">
                     <CategoryDropdown

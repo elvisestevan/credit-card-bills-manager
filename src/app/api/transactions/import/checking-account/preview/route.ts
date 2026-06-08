@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseCheckingAccountCsv } from "@/lib/parsers/checking-account";
+import { prisma } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 
 function dateToMonthYear(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -30,20 +32,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const items = transactions.map((t, index) => ({
-      index,
-      date: `${t.date.getFullYear()}-${String(t.date.getMonth() + 1).padStart(2, "0")}-${String(t.date.getDate()).padStart(2, "0")}`,
-      description: t.description,
-      amount: t.amount,
-      billMonthYear: dateToMonthYear(t.date),
-      selected: t.amount > 0,
-    }));
+    const existingTransactions = await prisma.transaction.findMany({
+      where: {
+        OR: transactions.map((t) => ({
+          date: t.date,
+          description: t.description,
+          amount: new Prisma.Decimal(t.amount),
+        })),
+      },
+      select: {
+        date: true,
+        description: true,
+        amount: true,
+      },
+    });
+
+    const existingKeys = new Set(
+      existingTransactions.map(
+        (t) => `${t.date.toISOString().split("T")[0]}|${t.description}|${t.amount.toString()}`
+      )
+    );
+
+    const items = transactions.map((t, index) => {
+      const key = `${t.date.toISOString().split("T")[0]}|${t.description}|${t.amount}`;
+      const exists = existingKeys.has(key);
+      return {
+        index,
+        date: `${t.date.getFullYear()}-${String(t.date.getMonth() + 1).padStart(2, "0")}-${String(t.date.getDate()).padStart(2, "0")}`,
+        description: t.description,
+        amount: t.amount,
+        billMonthYear: dateToMonthYear(t.date),
+        selected: t.amount > 0 && !exists,
+        exists,
+      };
+    });
 
     return NextResponse.json({ success: true, items, errors: parseErrors });
   } catch (error) {
     console.error("Checking account preview error:", error);
     return NextResponse.json(
-      { success: false, error: "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

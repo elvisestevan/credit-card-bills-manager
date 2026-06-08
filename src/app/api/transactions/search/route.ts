@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
         amount: true,
         installmentNumber: true,
         totalInstallments: true,
+        transactionType: true,
         category: { select: { name: true } },
       },
     });

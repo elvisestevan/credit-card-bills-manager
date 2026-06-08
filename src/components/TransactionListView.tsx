@@ -23,6 +23,7 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
   const [showRefunds, setShowRefunds] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -44,9 +45,9 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
 
   useEffect(() => {
     setPagination((p) => ({ ...p, page: 1 }));
-  }, [debouncedSearch, showInstallments, showLastInstallment, showRefunds, categoryFilter]);
+  }, [debouncedSearch, showInstallments, showLastInstallment, showRefunds, categoryFilter, transactionTypeFilter]);
 
-  const hasActiveFilters = searchInput || showInstallments || showLastInstallment || showRefunds || categoryFilter !== "";
+  const hasActiveFilters = searchInput || showInstallments || showLastInstallment || showRefunds || categoryFilter !== "" || transactionTypeFilter !== "";
 
   const fetchTransactions = useCallback(async () => {
     setIsLoading(true);
@@ -73,6 +74,9 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
       if (categoryFilter) {
         params.set("categoryId", categoryFilter);
       }
+      if (transactionTypeFilter) {
+        params.set("type", transactionTypeFilter);
+      }
 
       const url = typeof fetchUrl === "function" ? fetchUrl(params) : `${fetchUrl}?${params}`;
       const response = await fetch(url);
@@ -90,7 +94,7 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
     } finally {
       setIsLoading(false);
     }
-  }, [fetchUrl, pagination.page, pagination.limit, sortBy, sortOrder, debouncedSearch, showInstallments, showLastInstallment, showRefunds, categoryFilter]);
+  }, [fetchUrl, pagination.page, pagination.limit, sortBy, sortOrder, debouncedSearch, showInstallments, showLastInstallment, showRefunds, categoryFilter, transactionTypeFilter]);
 
   useEffect(() => {
     fetchTransactions();
@@ -237,6 +241,15 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
               </option>
             ))}
           </select>
+          <select
+            value={transactionTypeFilter}
+            onChange={(e) => setTransactionTypeFilter(e.target.value)}
+            className="px-3 py-1.5 text-sm rounded border bg-zinc-800 border-zinc-700 text-zinc-200 focus:outline-none focus:border-zinc-500"
+          >
+            <option value="">All types</option>
+            <option value="credit_card">Credit Card</option>
+            <option value="checking_account">Checking Account</option>
+          </select>
           {hasActiveFilters && (
             <button
               onClick={() => {
@@ -245,6 +258,7 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                 setShowLastInstallment(false);
                 setShowRefunds(false);
                 setCategoryFilter("");
+                setTransactionTypeFilter("");
               }}
               className="px-3 py-1.5 text-sm rounded border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
             >
@@ -335,6 +349,9 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                 <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">
                   Installments
                 </th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">
+                  Type
+                </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
                   Category
                 </th>
@@ -360,6 +377,15 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                     {transaction.installmentNumber && transaction.totalInstallments
                       ? `${transaction.installmentNumber}/${transaction.totalInstallments}`
                       : "-"}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                      transaction.transactionType === "checking_account"
+                        ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                        : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                    }`}>
+                      {transaction.transactionType === "checking_account" ? "Checking" : "Card"}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-300 min-w-[200px]">
                     <CategoryDropdown

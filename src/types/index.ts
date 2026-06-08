@@ -77,6 +77,7 @@ export interface Transaction {
   amount: string;
   installmentNumber: number | null;
   totalInstallments: number | null;
+  transactionType?: TransactionType;
   categoryId: number | null;
   categoryName?: string;
 }
@@ -111,4 +112,5 @@ export interface CheckingAccountPreviewItem {
   amount: number;
   billMonthYear: string;
   selected: boolean;
+  exists: boolean;
 }

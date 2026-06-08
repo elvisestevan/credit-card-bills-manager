@@ -9,6 +9,7 @@ interface SimilarTransaction {
   amount: string;
   installmentNumber: number | null;
   totalInstallments: number | null;
+  transactionType?: string;
   category: { name: string } | null;
 }
 
@@ -88,6 +89,7 @@ export function SimilarTransactionsModal({
                   <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Date</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Amount</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Installments</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">Type</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Category</th>
                 </tr>
               </thead>
@@ -104,6 +106,15 @@ export function SimilarTransactionsModal({
                       {t.installmentNumber && t.totalInstallments
                         ? `${t.installmentNumber}/${t.totalInstallments}`
                         : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                        t.transactionType === "checking_account"
+                          ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                          : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                      }`}>
+                        {t.transactionType === "checking_account" ? "Checking" : "Card"}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-zinc-300">
                       {t.category?.name ?? <span className="text-zinc-500">None</span>}
