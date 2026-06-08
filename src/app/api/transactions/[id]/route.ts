@@ -55,6 +55,7 @@ export async function PATCH(
       date: transaction.date.toISOString().split("T")[0],
       description: transaction.description,
       amount: transaction.amount.toString(),
+      transactionType: transaction.transactionType,
       categoryId: transaction.categoryId,
       categoryName: transaction.category?.name,
     });

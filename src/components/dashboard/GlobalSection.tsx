@@ -4,6 +4,11 @@ import { useState, useEffect } from "react";
 import { SummaryCards } from "./SummaryCards";
 import { MonthlyTrendChart } from "./Charts/MonthlyTrendChart";
 import { CategoryBreakdownBarChart } from "./Charts/CategoryBreakdownBarChart";
+import { TransactionType } from "@/types";
+
+interface GlobalSectionProps {
+  transactionType?: TransactionType;
+}
 
 interface GlobalData {
   bills: { monthYear: string; totalAmount: number }[];
@@ -21,14 +26,16 @@ interface GlobalData {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-export function GlobalSection() {
+export function GlobalSection({ transactionType }: GlobalSectionProps) {
   const [data, setData] = useState<GlobalData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
+      setIsLoading(true);
       try {
-        const res = await fetch("/api/dashboard/global");
+        const params = transactionType ? `?type=${transactionType}` : "";
+        const res = await fetch(`/api/dashboard/global${params}`);
         const json = await res.json();
         setData(json);
       } catch (err) {
@@ -38,7 +45,7 @@ export function GlobalSection() {
       }
     }
     fetchData();
-  }, []);
+  }, [transactionType]);
 
   if (isLoading) {
     return (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
+import { TransactionType } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +15,7 @@ export async function GET(request: NextRequest) {
     const installments = searchParams.get("installments") === "true";
     const lastInstallment = searchParams.get("lastInstallment") === "true";
     const refunds = searchParams.get("refunds") === "true";
+    const transactionType = searchParams.get("type");
 
     const skip = (page - 1) * limit;
 
@@ -33,6 +35,10 @@ export async function GET(request: NextRequest) {
 
     if (refunds) {
       where.amount = { lt: 0 };
+    }
+
+    if (transactionType === "credit_card" || transactionType === "checking_account") {
+      where.transactionType = transactionType;
     }
 
     if (categoryId) {
@@ -87,6 +93,7 @@ export async function GET(request: NextRequest) {
       cardName: t.cardName,
       installmentNumber: t.installmentNumber,
       totalInstallments: t.totalInstallments,
+      transactionType: t.transactionType as TransactionType,
       categoryId: t.categoryId,
       categoryName: t.category?.name || null,
       billId: t.billId,

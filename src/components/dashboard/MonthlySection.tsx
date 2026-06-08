@@ -7,6 +7,11 @@ import { BudgetProjectionChart } from "./Charts/BudgetProjectionChart";
 import { CategoryPieChart } from "./Charts/CategoryPieChart";
 import { CategoryBreakdownTable } from "./Charts/CategoryBreakdownTable";
 import { CategoryTrendChart } from "./Charts/CategoryTrendChart";
+import { TransactionType } from "@/types";
+
+interface MonthlySectionProps {
+  transactionType?: TransactionType;
+}
 
 interface BillOption {
   id: string;
@@ -48,7 +53,7 @@ interface TrendPoint {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-export function MonthlySection() {
+export function MonthlySection({ transactionType }: MonthlySectionProps) {
   const [bills, setBills] = useState<BillOption[]>([]);
   const [selectedBillId, setSelectedBillId] = useState<string | null>(null);
   const [data, setData] = useState<MonthlyData | null>(null);
@@ -61,14 +66,20 @@ export function MonthlySection() {
 
   useEffect(() => {
     async function fetchBills() {
+      setIsLoadingBills(true);
       try {
-        const res = await fetch("/api/bills");
+        const params = transactionType ? `?type=${transactionType}` : "";
+        const res = await fetch(`/api/bills${params}`);
         const json = await res.json();
         if (Array.isArray(json)) {
           const options = json as BillOption[];
           setBills(options);
           if (options.length > 0) {
-            setSelectedBillId(options[0].id);
+            if (!selectedBillId || !options.find((b) => b.id === selectedBillId)) {
+              setSelectedBillId(options[0].id);
+            }
+          } else {
+            setSelectedBillId(null);
           }
         }
       } catch (err) {
@@ -78,17 +89,26 @@ export function MonthlySection() {
       }
     }
     fetchBills();
-  }, []);
+  }, [transactionType]);
 
   useEffect(() => {
-    if (!selectedBillId) return;
+    if (!selectedBillId) {
+      setData(null);
+      return;
+    }
 
     async function fetchMonthlyData() {
       setIsLoadingData(true);
       setSelectedCategory(null);
       setTrendData([]);
       try {
-        const res = await fetch(`/api/dashboard/monthly?billId=${selectedBillId}`);
+        const params = new URLSearchParams({ billId: selectedBillId! });
+        if (transactionType) params.set("type", transactionType);
+        const res = await fetch(`/api/dashboard/monthly?${params}`);
+        if (!res.ok) {
+          setData(null);
+          return;
+        }
         const json = await res.json();
         setData(json);
 
@@ -108,7 +128,7 @@ export function MonthlySection() {
       }
     }
     fetchMonthlyData();
-  }, [selectedBillId]);
+  }, [selectedBillId, transactionType]);
 
   useEffect(() => {
     if (!selectedCategory || !categoryIdMap[selectedCategory]) {
@@ -163,7 +183,7 @@ export function MonthlySection() {
         <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-8 text-center text-zinc-500">
           Loading...
         </div>
-      ) : data ? (
+      ) : data?.bill ? (
         <>
           <SummaryCards
             cards={[

@@ -17,6 +17,7 @@ export async function GET(
         amount: true,
         installmentNumber: true,
         totalInstallments: true,
+        transactionType: true,
         billId: true,
         bill: {
           select: { monthYear: true },

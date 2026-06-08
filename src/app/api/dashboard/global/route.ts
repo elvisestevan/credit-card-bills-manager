@@ -1,12 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const transactionType = searchParams.get("type");
+    const typeFilter = transactionType === "credit_card" || transactionType === "checking_account"
+      ? { transactionType }
+      : {};
+
     const bills = await prisma.bill.findMany({
       include: {
         transactions: {
+          where: typeFilter,
           select: {
             amount: true,
             categoryId: true,
@@ -19,7 +26,9 @@ export async function GET() {
       orderBy: { monthYear: "asc" },
     });
 
-    const billsSummary = bills.map((bill) => {
+    const filteredBills = bills.filter((b) => b.transactions.length > 0);
+
+    const billsSummary = filteredBills.map((bill) => {
       const totalAmount = bill.transactions.reduce(
         (sum, t) => sum + (t.amount as Prisma.Decimal).toNumber(),
         0
@@ -32,7 +41,7 @@ export async function GET() {
       };
     });
 
-    const categoryBreakdown = bills.map((bill) => {
+    const categoryBreakdown = filteredBills.map((bill) => {
       const catMap = new Map<string, { total: number; count: number }>();
       for (const t of bill.transactions) {
         const catName = t.category?.name ?? "Uncategorized";
@@ -53,9 +62,9 @@ export async function GET() {
 
     const totalSpending = billsSummary.reduce((s, b) => s + b.totalAmount, 0);
     const summary = {
-      totalBills: bills.length,
+      totalBills: billsSummary.length,
       totalSpending,
-      averageMonthly: bills.length > 0 ? totalSpending / bills.length : 0,
+      averageMonthly: billsSummary.length > 0 ? totalSpending / billsSummary.length : 0,
     };
 
     return NextResponse.json({ bills: billsSummary, categoryBreakdown, summary });
