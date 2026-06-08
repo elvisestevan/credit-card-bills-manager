@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const billId = searchParams.get("billId");
+    const transactionType = searchParams.get("type");
 
     if (!billId) {
       return NextResponse.json(
@@ -14,10 +15,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const typeFilter = transactionType === "credit_card" || transactionType === "checking_account"
+      ? { transactionType }
+      : {};
+
     const bill = await prisma.bill.findUnique({
       where: { id: billId },
       include: {
         transactions: {
+          where: typeFilter,
           orderBy: { date: "asc" },
           include: { category: true },
         },
@@ -36,8 +42,8 @@ export async function GET(request: NextRequest) {
     let latestTxnYear = 0;
     let latestTxnMonth = 0;
     for (const t of bill.transactions) {
-      const y = t.date.getFullYear();
-      const m = t.date.getMonth() + 1;
+      const y = t.date.getUTCFullYear();
+      const m = t.date.getUTCMonth() + 1;
       if (y > latestTxnYear || (y === latestTxnYear && m > latestTxnMonth)) {
         latestTxnYear = y;
         latestTxnMonth = m;
@@ -54,10 +60,10 @@ export async function GET(request: NextRequest) {
 
     const dailyMap = new Map<number, number>();
     for (const t of bill.transactions) {
-      const txnMonth = t.date.getMonth() + 1;
+      const txnMonth = t.date.getUTCMonth() + 1;
       const day =
-        txnMonth === latestTxnMonth && t.date.getFullYear() === latestTxnYear
-          ? t.date.getDate()
+        txnMonth === latestTxnMonth && t.date.getUTCFullYear() === latestTxnYear
+          ? t.date.getUTCDate()
           : 1;
       dailyMap.set(day, (dailyMap.get(day) || 0) + (t.amount as Prisma.Decimal).toNumber());
     }

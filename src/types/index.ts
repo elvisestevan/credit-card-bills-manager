@@ -1,9 +1,17 @@
+export type TransactionType = "credit_card" | "checking_account";
+
 export interface ItauTransaction {
   date: Date;
   description: string;
   amount: number;
   installmentNumber: number | null;
   totalInstallments: number | null;
+}
+
+export interface CheckingAccountTransaction {
+  date: Date;
+  description: string;
+  amount: number;
 }
 
 export interface ImportResult {
@@ -30,6 +38,7 @@ export interface TransactionListResponse {
     cardName: string | null;
     installmentNumber: number | null;
     totalInstallments: number | null;
+    transactionType: TransactionType;
     categoryId: number | null;
     categoryName: string | null;
     billId: string;
@@ -93,4 +102,13 @@ export interface ImportResponse {
   ignored?: number;
   error?: string;
   conflicts?: ImportConflict[];
+}
+
+export interface CheckingAccountPreviewItem {
+  index: number;
+  date: string;
+  description: string;
+  amount: number;
+  billMonthYear: string;
+  selected: boolean;
 }

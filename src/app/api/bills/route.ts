@@ -1,10 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const transactionType = searchParams.get("type");
+
+    const whereBill: Prisma.BillWhereInput = {};
+    if (transactionType === "credit_card" || transactionType === "checking_account") {
+      whereBill.transactions = {
+        some: { transactionType },
+      };
+    }
+
     const bills = await prisma.bill.findMany({
+      where: whereBill,
       include: {
         _count: {
           select: { transactions: true },

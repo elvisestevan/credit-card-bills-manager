@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
+import { TransactionType } from "@/types";
 
 export async function GET(
   request: NextRequest,
@@ -19,6 +20,7 @@ export async function GET(
     const refunds = searchParams.get("refunds") === "true";
     const uncategorized = searchParams.get("uncategorized") === "true";
     const categoryIdFilter = searchParams.get("categoryId");
+    const transactionType = searchParams.get("type");
 
     const bill = await prisma.bill.findUnique({
       where: { id: billId },
@@ -39,6 +41,10 @@ export async function GET(
       sortOrder === "asc" ? ("asc" as const) : ("desc" as const);
 
     const where: Prisma.TransactionWhereInput = { billId };
+
+    if (transactionType === "credit_card" || transactionType === "checking_account") {
+      where.transactionType = transactionType;
+    }
 
     if (search) {
       where.OR = [
@@ -107,6 +113,7 @@ export async function GET(
       cardName: t.cardName,
       installmentNumber: t.installmentNumber,
       totalInstallments: t.totalInstallments,
+      transactionType: t.transactionType as TransactionType,
       categoryId: t.categoryId,
       categoryName: t.category?.name || null,
     }));

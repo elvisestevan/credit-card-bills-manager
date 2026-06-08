@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
+import { HydrationSafeZone } from "@/components/HydrationSafeZone";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,23 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-row">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(){
+                function c(){
+                  var e=document.getElementById('brk_yuan');
+                  if(e){e.removeAttribute('id');e.removeAttribute('hidden')}
+                }
+                c();
+                var o=new MutationObserver(function(){c()});
+                o.observe(document.documentElement,{attributes:true,subtree:true,attributeFilter:['id','hidden']});
+                setTimeout(function(){o.disconnect()},1e4);
+              })();
+            `
+          }}
+        />
+        <HydrationSafeZone />
         <Sidebar />
         <main className="flex-1 overflow-auto">{children}</main>
       </body>
