@@ -67,7 +67,7 @@ export function Sidebar() {
             <Link
               href="/transactions"
               className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                isActive("/transactions")
+                pathname === "/transactions"
                   ? "bg-zinc-800 text-white"
                   : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
               }`}
@@ -81,6 +81,30 @@ export function Sidebar() {
                 <path d="M8 5a1 1 0 100 2h5a1 1 0 100-2H8zM3 5a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1zM8 9a1 1 0 100 2h5a1 1 0 100-2H8zM3 9a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1zM8 13a1 1 0 100 2h5a1 1 0 100-2H8zM3 13a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1z" />
               </svg>
               Transactions
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/transactions/add"
+              className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                pathname === "/transactions/add"
+                  ? "bg-zinc-800 text-white"
+                  : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Quick Add
             </Link>
           </li>
           <li>

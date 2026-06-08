@@ -21,6 +21,7 @@ export async function GET(
     const uncategorized = searchParams.get("uncategorized") === "true";
     const categoryIdFilter = searchParams.get("categoryId");
     const transactionType = searchParams.get("type");
+    const cardNameFilter = searchParams.get("cardName");
 
     const bill = await prisma.bill.findUnique({
       where: { id: billId },
@@ -70,6 +71,10 @@ export async function GET(
           where.categoryId = parsedId;
         }
       }
+    }
+
+    if (cardNameFilter) {
+      where.cardName = cardNameFilter;
     }
 
     let installmentIds: number[] | undefined;

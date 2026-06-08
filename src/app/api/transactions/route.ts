@@ -3,6 +3,93 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { TransactionType } from "@/types";
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { date, description, amount, cardName, categoryName, installmentNumber, totalInstallments, transactionType } = body;
+
+    if (!date || !description || amount === undefined || amount === null) {
+      return NextResponse.json(
+        { success: false, error: "date, description, and amount are required" },
+        { status: 400 }
+      );
+    }
+
+    const [yearStr, monthStr, dayStr] = (date as string).split(/[/-]/);
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    const day = parseInt(dayStr, 10);
+
+    if (isNaN(year) || isNaN(month) || isNaN(day)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid date" },
+        { status: 400 }
+      );
+    }
+
+    const transactionDate = new Date(year, month - 1, day);
+    const monthPadded = String(month).padStart(2, "0");
+    const monthYear = `${monthPadded}-${year}`;
+
+    const bill = await prisma.bill.upsert({
+      where: { monthYear },
+      create: { monthYear },
+      update: {},
+    });
+
+    let categoryId: number | null = null;
+    if (categoryName) {
+      const normalized = categoryName.trim().toLowerCase();
+      const category = await prisma.category.upsert({
+        where: { name: normalized },
+        update: {},
+        create: { name: normalized },
+      });
+      categoryId = category.id;
+    }
+
+    const transaction = await prisma.transaction.create({
+      data: {
+        date: transactionDate,
+        description: description.trim(),
+        amount: new Prisma.Decimal(amount),
+        cardName: cardName?.trim() || null,
+        installmentNumber: installmentNumber != null ? parseInt(installmentNumber, 10) : null,
+        totalInstallments: totalInstallments != null ? parseInt(totalInstallments, 10) : null,
+        transactionType: transactionType === "checking_account" ? "checking_account" : "credit_card",
+        importId: crypto.randomUUID(),
+        billId: bill.id,
+        categoryId,
+      },
+      include: { category: true, bill: true },
+    });
+
+    return NextResponse.json({
+      success: true,
+      transaction: {
+        id: transaction.id,
+        date: transaction.date.toISOString().split("T")[0],
+        description: transaction.description,
+        amount: transaction.amount.toString(),
+        cardName: transaction.cardName,
+        installmentNumber: transaction.installmentNumber,
+        totalInstallments: transaction.totalInstallments,
+        transactionType: transaction.transactionType,
+        billId: transaction.billId,
+        billMonthYear: transaction.bill.monthYear,
+        categoryId: transaction.categoryId,
+        categoryName: transaction.category?.name || null,
+      },
+    });
+  } catch (error) {
+    console.error("Create transaction error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,6 +103,7 @@ export async function GET(request: NextRequest) {
     const lastInstallment = searchParams.get("lastInstallment") === "true";
     const refunds = searchParams.get("refunds") === "true";
     const transactionType = searchParams.get("type");
+    const cardNameFilter = searchParams.get("cardName");
 
     const skip = (page - 1) * limit;
 
@@ -50,6 +138,10 @@ export async function GET(request: NextRequest) {
           where.categoryId = parsedId;
         }
       }
+    }
+
+    if (cardNameFilter) {
+      where.cardName = cardNameFilter;
     }
 
     let installmentIds: number[] | undefined;

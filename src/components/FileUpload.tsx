@@ -15,6 +15,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [billMonthYear, setBillMonthYear] = useState("");
   const [billError, setBillError] = useState<string | null>(null);
+  const [cardName, setCardName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -56,6 +57,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("billMonthYear", billMonthYear);
+      if (cardName.trim()) formData.append("cardName", cardName.trim());
 
       const response = await fetch("/api/transactions/import", {
         method: "POST",
@@ -151,6 +153,21 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
         {billError && (
           <p className="mt-1 text-sm text-red-400">{billError}</p>
         )}
+      </div>
+
+      <div className="mb-4">
+        <label htmlFor="cardName" className="block text-sm font-medium text-zinc-300 mb-2">
+          Card Name
+        </label>
+        <input
+          id="cardName"
+          type="text"
+          value={cardName}
+          onChange={(e) => setCardName(e.target.value)}
+          placeholder="e.g., Itau, Nubank"
+          className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={isUploading}
+        />
       </div>
 
       <div

@@ -23,6 +23,8 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
   const [showRefunds, setShowRefunds] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [cardNames, setCardNames] = useState<string[]>([]);
+  const [cardNameFilter, setCardNameFilter] = useState("");
   const [transactionTypeFilter, setTransactionTypeFilter] = useState("");
 
   useEffect(() => {
@@ -41,13 +43,21 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
         }
       })
       .catch(console.error);
+    fetch("/api/transactions/card-names")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCardNames(data);
+        }
+      })
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
     setPagination((p) => ({ ...p, page: 1 }));
-  }, [debouncedSearch, showInstallments, showLastInstallment, showRefunds, categoryFilter, transactionTypeFilter]);
+  }, [debouncedSearch, showInstallments, showLastInstallment, showRefunds, categoryFilter, transactionTypeFilter, cardNameFilter]);
 
-  const hasActiveFilters = searchInput || showInstallments || showLastInstallment || showRefunds || categoryFilter !== "" || transactionTypeFilter !== "";
+  const hasActiveFilters = searchInput || showInstallments || showLastInstallment || showRefunds || categoryFilter !== "" || transactionTypeFilter !== "" || cardNameFilter !== "";
 
   const fetchTransactions = useCallback(async () => {
     setIsLoading(true);
@@ -77,6 +87,9 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
       if (transactionTypeFilter) {
         params.set("type", transactionTypeFilter);
       }
+      if (cardNameFilter) {
+        params.set("cardName", cardNameFilter);
+      }
 
       const url = typeof fetchUrl === "function" ? fetchUrl(params) : `${fetchUrl}?${params}`;
       const response = await fetch(url);
@@ -94,7 +107,7 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
     } finally {
       setIsLoading(false);
     }
-  }, [fetchUrl, pagination.page, pagination.limit, sortBy, sortOrder, debouncedSearch, showInstallments, showLastInstallment, showRefunds, categoryFilter, transactionTypeFilter]);
+  }, [fetchUrl, pagination.page, pagination.limit, sortBy, sortOrder, debouncedSearch, showInstallments, showLastInstallment, showRefunds, categoryFilter, transactionTypeFilter, cardNameFilter]);
 
   useEffect(() => {
     fetchTransactions();
@@ -250,6 +263,16 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
             <option value="credit_card">Credit Card</option>
             <option value="checking_account">Checking Account</option>
           </select>
+          <select
+            value={cardNameFilter}
+            onChange={(e) => setCardNameFilter(e.target.value)}
+            className="px-3 py-1.5 text-sm rounded border bg-zinc-800 border-zinc-700 text-zinc-200 focus:outline-none focus:border-zinc-500"
+          >
+            <option value="">All cards</option>
+            {cardNames.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
           {hasActiveFilters && (
             <button
               onClick={() => {
@@ -259,6 +282,7 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                 setShowRefunds(false);
                 setCategoryFilter("");
                 setTransactionTypeFilter("");
+                setCardNameFilter("");
               }}
               className="px-3 py-1.5 text-sm rounded border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
             >
@@ -340,6 +364,9 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                 >
                   Description <SortIcon field="description" />
                 </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  Card
+                </th>
                 <th
                   className="px-4 py-3 text-right text-sm font-medium text-zinc-400 cursor-pointer hover:bg-zinc-800"
                   onClick={() => handleSort("amount")}
@@ -370,6 +397,9 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                   )}
                   <td className="px-4 py-3 text-sm text-zinc-300">{transaction.date}</td>
                   <td className="px-4 py-3 text-sm text-zinc-200">{transaction.description}</td>
+                  <td className="px-4 py-3 text-sm text-zinc-500">
+                    {transaction.cardName || "-"}
+                  </td>
                   <td className={`px-4 py-3 text-sm text-right font-medium ${getAmountClass(transaction.amount)}`}>
                     {formatAmount(transaction.amount)}
                   </td>
@@ -379,12 +409,12 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                       : "-"}
                   </td>
                   <td className="px-4 py-3 text-sm text-center">
-                    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                       transaction.transactionType === "checking_account"
-                        ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
-                        : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                        ? "bg-blue-900/40 text-blue-400"
+                        : "bg-zinc-800 text-zinc-400"
                     }`}>
-                      {transaction.transactionType === "checking_account" ? "Checking" : "Card"}
+                      {transaction.transactionType === "checking_account" ? "CA" : "CC"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-300 min-w-[200px]">
