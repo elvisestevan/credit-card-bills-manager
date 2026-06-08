@@ -340,6 +340,9 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                 >
                   Description <SortIcon field="description" />
                 </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  Card
+                </th>
                 <th
                   className="px-4 py-3 text-right text-sm font-medium text-zinc-400 cursor-pointer hover:bg-zinc-800"
                   onClick={() => handleSort("amount")}
@@ -370,6 +373,9 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                   )}
                   <td className="px-4 py-3 text-sm text-zinc-300">{transaction.date}</td>
                   <td className="px-4 py-3 text-sm text-zinc-200">{transaction.description}</td>
+                  <td className="px-4 py-3 text-sm text-zinc-500">
+                    {transaction.cardName || "-"}
+                  </td>
                   <td className={`px-4 py-3 text-sm text-right font-medium ${getAmountClass(transaction.amount)}`}>
                     {formatAmount(transaction.amount)}
                   </td>
@@ -379,12 +385,12 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                       : "-"}
                   </td>
                   <td className="px-4 py-3 text-sm text-center">
-                    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                       transaction.transactionType === "checking_account"
-                        ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
-                        : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                        ? "bg-blue-900/40 text-blue-400"
+                        : "bg-zinc-800 text-zinc-400"
                     }`}>
-                      {transaction.transactionType === "checking_account" ? "Checking" : "Card"}
+                      {transaction.transactionType === "checking_account" ? "CA" : "CC"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-300 min-w-[200px]">
