@@ -6,7 +6,7 @@ import { TransactionType } from "@/types";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { date, description, amount, cardName, categoryName, installmentNumber, totalInstallments } = body;
+    const { date, description, amount, cardName, categoryName, installmentNumber, totalInstallments, transactionType } = body;
 
     if (!date || !description || amount === undefined || amount === null) {
       return NextResponse.json(
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         cardName: cardName?.trim() || null,
         installmentNumber: installmentNumber != null ? parseInt(installmentNumber, 10) : null,
         totalInstallments: totalInstallments != null ? parseInt(totalInstallments, 10) : null,
-        transactionType: "credit_card",
+        transactionType: transactionType === "checking_account" ? "checking_account" : "credit_card",
         importId: crypto.randomUUID(),
         billId: bill.id,
         categoryId,
@@ -103,6 +103,7 @@ export async function GET(request: NextRequest) {
     const lastInstallment = searchParams.get("lastInstallment") === "true";
     const refunds = searchParams.get("refunds") === "true";
     const transactionType = searchParams.get("type");
+    const cardNameFilter = searchParams.get("cardName");
 
     const skip = (page - 1) * limit;
 
@@ -137,6 +138,10 @@ export async function GET(request: NextRequest) {
           where.categoryId = parsedId;
         }
       }
+    }
+
+    if (cardNameFilter) {
+      where.cardName = cardNameFilter;
     }
 
     let installmentIds: number[] | undefined;

@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const billMonthYear = formData.get("billMonthYear") as string | null;
+    const cardName = formData.get("cardName") as string | null;
 
     if (!file) {
       return NextResponse.json({ success: false, error: "No file provided" }, { status: 400 });
@@ -115,6 +116,7 @@ export async function POST(request: NextRequest) {
           date: t.date,
           description: t.description,
           amount: new Prisma.Decimal(t.amount),
+          cardName: cardName?.trim() || null,
           installmentNumber: t.installmentNumber,
           totalInstallments: t.totalInstallments,
           transactionType: "credit_card",

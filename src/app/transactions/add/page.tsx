@@ -40,6 +40,7 @@ export default function AddTransactionPage() {
   const [description, setDescription] = useState("");
   const [amountCents, setAmountCents] = useState(0);
   const [isNegative, setIsNegative] = useState(false);
+  const [transactionType, setTransactionType] = useState<"credit_card" | "checking_account">("credit_card");
   const [cardName, setCardName] = useState("");
   const [category, setCategory] = useState("");
   const [showInstallments, setShowInstallments] = useState(false);
@@ -82,6 +83,7 @@ export default function AddTransactionPage() {
     setDescription("");
     setAmountCents(0);
     setIsNegative(false);
+    setTransactionType("credit_card");
     setCategory("");
     setShowInstallments(false);
     setInstallmentNumber("");
@@ -119,6 +121,7 @@ export default function AddTransactionPage() {
           date: parsedDate.toISOString().split("T")[0],
           description: description.trim(),
           amount,
+          transactionType,
           cardName: cardName.trim() || undefined,
           categoryName: category.trim() || undefined,
           installmentNumber: installmentNumber ? parseInt(installmentNumber, 10) : undefined,
@@ -305,6 +308,18 @@ export default function AddTransactionPage() {
                 placeholder="Ex: Nubank"
                 autoComplete="off"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm text-zinc-400 mb-1">Type</label>
+              <select
+                value={transactionType}
+                onChange={(e) => setTransactionType(e.target.value as "credit_card" | "checking_account")}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-zinc-100 focus:outline-none focus:border-zinc-500"
+              >
+                <option value="credit_card">Credit Card</option>
+                <option value="checking_account">Checking Account</option>
+              </select>
             </div>
 
             <div>
