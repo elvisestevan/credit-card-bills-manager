@@ -71,6 +71,7 @@ export async function GET(
         amount: t.amount.toString(),
         installmentNumber: t.installmentNumber,
         totalInstallments: t.totalInstallments,
+        transactionType: t.transactionType,
         suggestedCategoryId: suggestion?.categoryId ?? null,
         suggestedCategoryName: suggestion?.categoryName ?? null,
       };

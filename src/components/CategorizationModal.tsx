@@ -24,7 +24,7 @@ export function CategorizationModal({
   const [isSaving, setIsSaving] = useState(false);
   const [showBulkPrompt, setShowBulkPrompt] = useState(false);
   const [matchingTransactions, setMatchingTransactions] = useState<
-    { id: number; date: string; description: string; amount: string; installmentNumber?: number | null; totalInstallments?: number | null }[]
+    { id: number; date: string; description: string; amount: string; installmentNumber?: number | null; totalInstallments?: number | null; transactionType?: string }[]
   >([]);
   const [selectedTransactionIds, setSelectedTransactionIds] = useState<number[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
@@ -252,10 +252,21 @@ export function CategorizationModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm text-zinc-400 mb-1">Description</label>
-            <div className="text-zinc-200">{transaction.description}</div>
-          </div>
+            <div>
+              <label className="block text-sm text-zinc-400 mb-1">Description</label>
+              <div className="text-zinc-200 flex items-center gap-2">
+                {transaction.description}
+                {transaction.transactionType && (
+                  <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                    transaction.transactionType === "checking_account"
+                      ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                      : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                  }`}>
+                    {transaction.transactionType === "checking_account" ? "Checking" : "Card"}
+                  </span>
+                )}
+              </div>
+            </div>
 
           {transaction.installmentNumber && transaction.totalInstallments && (
             <div>
@@ -303,6 +314,7 @@ export function CategorizationModal({
                     <th className="px-3 py-2 text-left text-sm text-zinc-400">Date</th>
                     <th className="px-3 py-2 text-left text-sm text-zinc-400">Description</th>
                     <th className="px-3 py-2 text-left text-sm text-zinc-400">Installments</th>
+                    <th className="px-3 py-2 text-center text-sm text-zinc-400">Type</th>
                     <th className="px-3 py-2 text-right text-sm text-zinc-400">Amount</th>
                   </tr>
                 </thead>
@@ -323,6 +335,15 @@ export function CategorizationModal({
                         {t.installmentNumber && t.totalInstallments
                           ? `${t.installmentNumber}/${t.totalInstallments}`
                           : "-"}
+                      </td>
+                      <td className="px-3 py-2 text-sm text-center">
+                        <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                          t.transactionType === "checking_account"
+                            ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                            : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                        }`}>
+                          {t.transactionType === "checking_account" ? "Checking" : "Card"}
+                        </span>
                       </td>
                       <td className={`px-3 py-2 text-sm text-right ${parseFloat(t.amount) < 0 ? "text-green-400" : "text-red-400"}`}>
                         {formatAmount(t.amount)}
