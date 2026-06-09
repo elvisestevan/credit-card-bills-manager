@@ -19,3 +19,31 @@ export async function GET() {
     );
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const amount = body.amount;
+
+    if (typeof amount !== "number" || isNaN(amount) || amount <= 0) {
+      return NextResponse.json(
+        { error: "Amount must be a positive number" },
+        { status: 400 }
+      );
+    }
+
+    const budgetGoal = await prisma.budgetGoal.upsert({
+      where: { id: 1 },
+      update: { amount },
+      create: { id: 1, amount },
+    });
+
+    return NextResponse.json({ amount: (budgetGoal.amount as Prisma.Decimal).toNumber() });
+  } catch (error) {
+    console.error("Budget PUT error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
