@@ -45,9 +45,11 @@ bun --bun run prisma db execute --file /tmp/delete.sql
 - `src/app/api/transactions/import/checking-account/preview/route.ts` - Checking account preview API
 - `src/app/api/transactions/import/checking-account/confirm/route.ts` - Checking account import API
 - `src/app/api/transactions/route.ts` - List API
-- `src/components/FileUpload.tsx` - Upload component
+- `src/app/transactions/add/page.tsx` - Unified add page (tabs: Import CSV / Manual Entry)
+- `src/components/FileUpload.tsx` - Credit card CSV upload component
+- `src/components/CheckingAccountImport.tsx` - Checking account CSV import component
+- `src/components/ManualEntryForm.tsx` - Manual transaction entry form component
 - `src/components/TransactionsTable.tsx` - Table component
-- `src/app/checking-account/import/page.tsx` - Checking account import page
 
 ## CSV Format (Itau)
 Columns: `data,lançamento,valor`

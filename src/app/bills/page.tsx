@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Bill } from "@/types";
-import { FileUpload } from "@/components/FileUpload";
 
 export default function BillsPage() {
   const [bills, setBills] = useState<Bill[]>([]);
@@ -30,17 +29,6 @@ export default function BillsPage() {
     }
     fetchBills();
   }, []);
-
-  const handleUploadComplete = () => {
-    fetch("/api/bills")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setBills(data);
-        }
-      })
-      .catch(console.error);
-  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -71,17 +59,12 @@ export default function BillsPage() {
             Credit Card Bills Manager
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Import your Itau credit card statements
+            Manage your credit card bills
           </p>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        <section className="mb-8">
-          <h2 className="text-lg font-medium text-zinc-200 mb-4">Import CSV</h2>
-          <FileUpload onUploadComplete={handleUploadComplete} />
-        </section>
-
         <section>
           <h2 className="text-lg font-medium text-zinc-200 mb-4">Bills</h2>
           <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-x-auto">
