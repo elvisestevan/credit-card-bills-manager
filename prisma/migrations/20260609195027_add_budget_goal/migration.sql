@@ -1,0 +1,5 @@
+-- CreateTable
+CREATE TABLE "BudgetGoal" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "amount" DECIMAL NOT NULL
+);
