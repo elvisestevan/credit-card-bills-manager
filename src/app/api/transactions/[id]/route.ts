@@ -8,9 +8,9 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { categoryId, categoryName } = body;
+    const { categoryId, categoryName, userDescription } = body;
 
-    let finalCategoryId: number | null;
+    let finalCategoryId: number | null | undefined = undefined;
 
     if (categoryName) {
       const normalizedName = categoryName.trim().toLowerCase();
@@ -37,16 +37,19 @@ export async function PATCH(
       }
 
       finalCategoryId = categoryId;
-    } else {
-      return NextResponse.json(
-        { error: "categoryId or categoryName is required" },
-        { status: 400 }
-      );
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (finalCategoryId !== undefined) {
+      updateData.categoryId = finalCategoryId;
+    }
+    if (userDescription !== undefined) {
+      updateData.userDescription = userDescription || null;
     }
 
     const transaction = await prisma.transaction.update({
       where: { id: parseInt(id, 10) },
-      data: { categoryId: finalCategoryId },
+      data: updateData,
       include: { category: true },
     });
 
@@ -54,6 +57,7 @@ export async function PATCH(
       id: transaction.id,
       date: transaction.date.toISOString().split("T")[0],
       description: transaction.description,
+      userDescription: transaction.userDescription,
       amount: transaction.amount.toString(),
       transactionType: transaction.transactionType,
       categoryId: transaction.categoryId,
