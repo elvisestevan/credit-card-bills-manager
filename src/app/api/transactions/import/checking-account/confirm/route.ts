@@ -31,6 +31,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid selectedIndices format" }, { status: 400 });
     }
 
+    const userDescriptionsRaw = formData.get("userDescriptions") as string | null;
+    let userDescriptions: Record<string, string> = {};
+    if (userDescriptionsRaw) {
+      try {
+        userDescriptions = JSON.parse(userDescriptionsRaw);
+        if (typeof userDescriptions !== "object" || Array.isArray(userDescriptions)) {
+          userDescriptions = {};
+        }
+      } catch {
+        // Invalid JSON, ignore
+      }
+    }
+
     const content = await file.text();
     const { transactions, errors: parseErrors } = parseCheckingAccountCsv(content);
 
@@ -115,14 +128,18 @@ export async function POST(request: NextRequest) {
       const billId = await getOrCreateBill(monthYear);
       createdBillIds.push(billId);
       await prisma.transaction.createMany({
-        data: txns.map((t) => ({
-          date: t.date,
-          description: t.description,
-          amount: new Prisma.Decimal(t.amount),
-          transactionType: "checking_account",
-          importId: batchImportId,
-          billId,
-        })),
+        data: txns.map((t) => {
+          const key = `${t.date.toISOString().split("T")[0]}|${t.description}|${t.amount}`;
+          return {
+            date: t.date,
+            description: t.description,
+            userDescription: userDescriptions[key]?.trim() || null,
+            amount: new Prisma.Decimal(t.amount),
+            transactionType: "checking_account",
+            importId: batchImportId,
+            billId,
+          };
+        }),
       });
       totalAdded += txns.length;
     }
