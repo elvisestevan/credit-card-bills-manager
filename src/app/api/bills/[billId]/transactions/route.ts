@@ -50,6 +50,7 @@ export async function GET(
     if (search) {
       where.OR = [
         { description: { contains: search } },
+        { userDescription: { contains: search } },
         { category: { name: { contains: search } } },
       ];
     }
@@ -121,6 +122,7 @@ export async function GET(
       transactionType: t.transactionType as TransactionType,
       categoryId: t.categoryId,
       categoryName: t.category?.name || null,
+      userDescription: t.userDescription,
     }));
 
     const summary = {
