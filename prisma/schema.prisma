@@ -26,6 +26,7 @@ model Transaction {
   id                Int       @id @default(autoincrement())
   date              DateTime
   description       String
+  userDescription   String?
   amount            Decimal
   cardName          String?
   installmentNumber Int?
