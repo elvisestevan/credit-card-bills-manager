@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { BudgetForm } from "@/components/settings/BudgetForm";
