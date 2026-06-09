@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { CheckingAccountPreviewItem } from "@/types";
 
 export function CheckingAccountImport() {
@@ -11,6 +11,7 @@ export function CheckingAccountImport() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [parseErrors, setParseErrors] = useState<string[]>([]);
+  const [userDescriptions, setUserDescriptions] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatCurrency = (value: number) =>
@@ -73,6 +74,18 @@ export function CheckingAccountImport() {
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("selectedIndices", JSON.stringify(selectedIndices));
+
+      const selectedItems = items.filter((i) => i.selected);
+      const filledUserDescriptions: Record<string, string> = {};
+      selectedItems.forEach((item) => {
+        const key = `${item.date}|${item.description}|${item.amount}`;
+        if (userDescriptions[key]?.trim()) {
+          filledUserDescriptions[key] = userDescriptions[key].trim();
+        }
+      });
+      if (Object.keys(filledUserDescriptions).length > 0) {
+        formData.append("userDescriptions", JSON.stringify(filledUserDescriptions));
+      }
 
       const response = await fetch("/api/transactions/import/checking-account/confirm", {
         method: "POST",
@@ -145,6 +158,33 @@ export function CheckingAccountImport() {
     fileInputRef.current?.click();
   };
 
+  useEffect(() => {
+    if (items.length === 0) return;
+    const uniqueDescriptions = [...new Set(items.map((i) => i.description))];
+    const fetchSuggestions = async () => {
+      const suggestions: Record<string, string> = {};
+      for (const desc of uniqueDescriptions) {
+        try {
+          const res = await fetch(`/api/transactions/user-description-suggestions?description=${encodeURIComponent(desc)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.userDescription) {
+              const item = items.find((i) => i.description === desc);
+              if (item) {
+                const key = `${item.date}|${item.description}|${item.amount}`;
+                suggestions[key] = data.userDescription;
+              }
+            }
+          }
+        } catch {
+          // Ignore
+        }
+      }
+      setUserDescriptions((prev) => ({ ...prev, ...suggestions }));
+    };
+    fetchSuggestions();
+  }, [items]);
+
   const newItems = items.filter((i) => !i.exists);
   const hasData = newItems.length > 0;
 
@@ -153,6 +193,7 @@ export function CheckingAccountImport() {
     setSelectedFile(null);
     setMessage(null);
     setParseErrors([]);
+    setUserDescriptions({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -267,6 +308,7 @@ export function CheckingAccountImport() {
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Date</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Description</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Label</th>
                   <th className="px-4 py-3 text-right text-sm font-medium text-zinc-400">Amount</th>
                   <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">Bill (MM-YYYY)</th>
                 </tr>
@@ -291,6 +333,18 @@ export function CheckingAccountImport() {
                     </td>
                     <td className="px-4 py-3 text-sm text-zinc-300">{item.date}</td>
                     <td className="px-4 py-3 text-sm text-zinc-200">{item.description}</td>
+                    <td className="px-4 py-3 text-sm" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="text"
+                        value={userDescriptions[`${item.date}|${item.description}|${item.amount}`] || ""}
+                        onChange={(e) => {
+                          const key = `${item.date}|${item.description}|${item.amount}`;
+                          setUserDescriptions((prev) => ({ ...prev, [key]: e.target.value }));
+                        }}
+                        placeholder="Add label..."
+                        className="w-full bg-transparent border border-zinc-700 rounded px-2 py-0.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                      />
+                    </td>
                     <td className={`px-4 py-3 text-sm text-right font-medium ${getAmountClass(item.amount)}`}>
                       {formatCurrency(item.amount)}
                     </td>
