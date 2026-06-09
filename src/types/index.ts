@@ -34,6 +34,7 @@ export interface TransactionListResponse {
     id: number;
     date: string;
     description: string;
+    userDescription: string | null;
     amount: string;
     cardName: string | null;
     installmentNumber: number | null;
@@ -74,6 +75,7 @@ export interface Transaction {
   id: number;
   date: string;
   description: string;
+  userDescription: string | null;
   amount: string;
   installmentNumber: number | null;
   totalInstallments: number | null;

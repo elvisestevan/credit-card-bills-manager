@@ -44,8 +44,8 @@ describe("GET /api/bills/[billId]/transactions", async () => {
       monthYear: "04-2026",
     };
     const mockTransactions = [
-      { id: 1, date: new Date("2024-01-02"), description: "Test2", amount: { toString: () => "-100" }, cardName: null, installmentNumber: null, totalInstallments: null, categoryId: null, category: null },
-      { id: 2, date: new Date("2024-01-01"), description: "Test1", amount: { toString: () => "-50" }, cardName: null, installmentNumber: null, totalInstallments: null, categoryId: null, category: null },
+      { id: 1, date: new Date("2024-01-02"), description: "Test2", amount: { toString: () => "-100" },       cardName: null, installmentNumber: null, totalInstallments: null, categoryId: null, category: null, userDescription: null },
+      { id: 2, date: new Date("2024-01-01"), description: "Test1", amount: { toString: () => "-50" }, cardName: null, installmentNumber: null, totalInstallments: null, categoryId: null, category: null, userDescription: null },
     ];
 
     mockPrisma.bill.findUnique.mockResolvedValueOnce(mockBill);

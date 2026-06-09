@@ -6,7 +6,7 @@ import { TransactionType } from "@/types";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { date, description, amount, cardName, categoryName, installmentNumber, totalInstallments, transactionType } = body;
+    const { date, description, userDescription, amount, cardName, categoryName, installmentNumber, totalInstallments, transactionType } = body;
 
     if (!date || !description || amount === undefined || amount === null) {
       return NextResponse.json(
@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       data: {
         date: transactionDate,
         description: description.trim(),
+        userDescription: userDescription?.trim() || null,
         amount: new Prisma.Decimal(amount),
         cardName: cardName?.trim() || null,
         installmentNumber: installmentNumber != null ? parseInt(installmentNumber, 10) : null,
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
         id: transaction.id,
         date: transaction.date.toISOString().split("T")[0],
         description: transaction.description,
+        userDescription: transaction.userDescription,
         amount: transaction.amount.toString(),
         cardName: transaction.cardName,
         installmentNumber: transaction.installmentNumber,
@@ -117,6 +119,7 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { description: { contains: search } },
+        { userDescription: { contains: search } },
         { category: { name: { contains: search } } },
       ];
     }
@@ -181,6 +184,7 @@ export async function GET(request: NextRequest) {
       id: t.id,
       date: t.date.toISOString().split("T")[0],
       description: t.description,
+      userDescription: t.userDescription,
       amount: t.amount.toString(),
       cardName: t.cardName,
       installmentNumber: t.installmentNumber,

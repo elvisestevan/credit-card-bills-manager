@@ -9,6 +9,69 @@ interface TransactionListViewProps {
   showBillColumn?: boolean;
 }
 
+function UserDescriptionCell({
+  transaction,
+  onUpdate,
+}: {
+  transaction: TransactionListResponse["data"][number];
+  onUpdate: (id: number, userDescription: string | null) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(transaction.userDescription || "");
+
+  const handleSave = async () => {
+    const newValue = value.trim() || null;
+    if (newValue === transaction.userDescription) {
+      setIsEditing(false);
+      return;
+    }
+    try {
+      const response = await fetch(`/api/transactions/${transaction.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userDescription: newValue }),
+      });
+      if (response.ok) {
+        onUpdate(transaction.id, newValue);
+        setIsEditing(false);
+      }
+    } catch (error) {
+      console.error("Failed to update userDescription:", error);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") handleSave();
+          if (e.key === "Escape") {
+            setValue(transaction.userDescription || "");
+            setIsEditing(false);
+          }
+        }}
+        autoFocus
+        className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-0.5 text-sm text-zinc-100 focus:outline-none focus:border-blue-500"
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={() => setIsEditing(true)}
+      className={`cursor-pointer hover:bg-zinc-700/50 px-2 py-0.5 rounded -mx-2 text-sm ${
+        transaction.userDescription ? "text-zinc-200" : "text-zinc-600 italic"
+      }`}
+    >
+      {transaction.userDescription || "Add label..."}
+    </span>
+  );
+}
+
 export function TransactionListView({ fetchUrl, showBillColumn = false }: TransactionListViewProps) {
   const [data, setData] = useState<TransactionListResponse["data"]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 });
@@ -365,6 +428,9 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                   Description <SortIcon field="description" />
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  Label
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
                   Card
                 </th>
                 <th
@@ -397,6 +463,18 @@ export function TransactionListView({ fetchUrl, showBillColumn = false }: Transa
                   )}
                   <td className="px-4 py-3 text-sm text-zinc-300">{transaction.date}</td>
                   <td className="px-4 py-3 text-sm text-zinc-200">{transaction.description}</td>
+                  <td className="px-4 py-3 text-sm max-w-[200px]">
+                    <UserDescriptionCell
+                      transaction={transaction}
+                      onUpdate={(id, userDescription) => {
+                        setData((prev) =>
+                          prev.map((t) =>
+                            t.id === id ? { ...t, userDescription } : t
+                          )
+                        );
+                      }}
+                    />
+                  </td>
                   <td className="px-4 py-3 text-sm text-zinc-500">
                     {transaction.cardName || "-"}
                   </td>

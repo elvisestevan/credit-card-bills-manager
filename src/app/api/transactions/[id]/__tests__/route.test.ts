@@ -28,6 +28,7 @@ describe("PATCH /api/transactions/[id]", async () => {
       id: 1,
       date: new Date("2024-01-15"),
       description: "Mercado",
+      userDescription: null,
       amount: { toString: () => "-150" },
       categoryId: 5,
       category: mockCategory,
@@ -59,6 +60,7 @@ describe("PATCH /api/transactions/[id]", async () => {
       id: 2,
       date: new Date("2024-02-10"),
       description: "Uber",
+      userDescription: null,
       amount: { toString: () => "-25" },
       categoryId: 10,
       category: mockCategory,
@@ -88,6 +90,7 @@ describe("PATCH /api/transactions/[id]", async () => {
       id: 3,
       date: new Date("2024-03-05"),
       description: "Old categorized",
+      userDescription: null,
       amount: { toString: () => "-100" },
       categoryId: null,
       category: null,
@@ -127,7 +130,17 @@ describe("PATCH /api/transactions/[id]", async () => {
     expect(data.error).toBe("Category not found");
   });
 
-  it("should return 400 if no categoryId or categoryName provided", async () => {
+  it("should return 200 with empty body (no changes)", async () => {
+    mockPrisma.transaction.update.mockResolvedValueOnce({
+      id: 1,
+      date: new Date("2024-01-15"),
+      description: "Mercado",
+      userDescription: null,
+      amount: { toString: () => "-150" },
+      categoryId: null,
+      category: null,
+    });
+
     const request = new Request("http://localhost:3000/api/transactions/1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -136,7 +149,64 @@ describe("PATCH /api/transactions/[id]", async () => {
     const response = await PATCH(request, { params: Promise.resolve({ id: "1" }) });
     const data = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(data.error).toBe("categoryId or categoryName is required");
+    expect(response.status).toBe(200);
+    expect(mockPrisma.transaction.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 1 },
+        data: {},
+      })
+    );
+  });
+
+  it("should update userDescription", async () => {
+    mockPrisma.transaction.update.mockResolvedValueOnce({
+      id: 4,
+      date: new Date("2024-04-01"),
+      description: "NETFLIX",
+      userDescription: "My Netflix",
+      amount: { toString: () => "-39.90" },
+      categoryId: null,
+      category: null,
+    });
+
+    const request = new Request("http://localhost:3000/api/transactions/4", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userDescription: "My Netflix" }),
+    });
+    const response = await PATCH(request, { params: Promise.resolve({ id: "4" }) });
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.userDescription).toBe("My Netflix");
+    expect(mockPrisma.transaction.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 4 },
+        data: { userDescription: "My Netflix" },
+      })
+    );
+  });
+
+  it("should clear userDescription when set to null", async () => {
+    mockPrisma.transaction.update.mockResolvedValueOnce({
+      id: 5,
+      date: new Date("2024-05-01"),
+      description: "Uber",
+      userDescription: null,
+      amount: { toString: () => "-25" },
+      categoryId: null,
+      category: null,
+    });
+
+    const request = new Request("http://localhost:3000/api/transactions/5", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userDescription: null }),
+    });
+    const response = await PATCH(request, { params: Promise.resolve({ id: "5" }) });
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.userDescription).toBeNull();
   });
 });
