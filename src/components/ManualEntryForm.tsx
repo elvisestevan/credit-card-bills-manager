@@ -50,6 +50,7 @@ export function ManualEntryForm() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
+  const [userDescription, setUserDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const dateRef = useRef<HTMLInputElement>(null);
@@ -68,6 +69,25 @@ export function ManualEntryForm() {
       .catch(console.error);
   }, []);
 
+  useEffect(() => {
+    const trimmed = description.trim();
+    if (!trimmed) return;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/transactions/user-description-suggestions?description=" + encodeURIComponent(trimmed));
+        if (res.ok) {
+          const data = await res.json();
+          if (data.userDescription && !userDescription) {
+            setUserDescription(data.userDescription);
+          }
+        }
+      } catch {
+        // Ignore network errors
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [description, userDescription]);
+
   const amountDisplay = `${isNegative ? "−" : ""}${(amountCents / 100).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -81,6 +101,7 @@ export function ManualEntryForm() {
   const resetForm = () => {
     setDate(formatDate(new Date()));
     setDescription("");
+    setUserDescription("");
     setAmountCents(0);
     setIsNegative(false);
     setTransactionType("credit_card");
@@ -120,6 +141,7 @@ export function ManualEntryForm() {
         body: JSON.stringify({
           date: parsedDate.toISOString().split("T")[0],
           description: description.trim(),
+          userDescription: userDescription.trim() || undefined,
           amount,
           transactionType,
           cardName: cardName.trim() || undefined,
@@ -247,6 +269,18 @@ export function ManualEntryForm() {
               onChange={(e) => setDescription(e.target.value.toUpperCase())}
               className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-zinc-100 focus:outline-none focus:border-zinc-500"
               placeholder="Ex: SUPERMERCADO"
+              autoComplete="off"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-zinc-400 mb-1">Label (optional)</label>
+            <input
+              type="text"
+              value={userDescription}
+              onChange={(e) => setUserDescription(e.target.value)}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-zinc-100 focus:outline-none focus:border-zinc-500"
+              placeholder="Ex: Minha Netflix"
               autoComplete="off"
             />
           </div>
