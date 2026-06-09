@@ -19,10 +19,6 @@ function UserDescriptionCell({
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(transaction.userDescription || "");
 
-  useEffect(() => {
-    setValue(transaction.userDescription || "");
-  }, [transaction.userDescription]);
-
   const handleSave = async () => {
     const newValue = value.trim() || null;
     if (newValue === transaction.userDescription) {
