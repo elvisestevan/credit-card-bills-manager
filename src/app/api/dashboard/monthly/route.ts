@@ -100,7 +100,13 @@ export async function GET(request: NextRequest) {
         ? bill.transactions[bill.transactions.length - 1]
         : null;
 
-    const BUDGET_GOAL = 10000;
+    let budgetGoalRow = await prisma.budgetGoal.findFirst();
+    if (!budgetGoalRow) {
+      budgetGoalRow = await prisma.budgetGoal.create({
+        data: { amount: 10000 },
+      });
+    }
+    const BUDGET_GOAL = (budgetGoalRow.amount as Prisma.Decimal).toNumber();
     const remainingBudget = BUDGET_GOAL - totalAmount;
 
     return NextResponse.json({
