@@ -32,6 +32,9 @@ bun --bun run prisma studio                       # Open database GUI
 - Prisma client generated to: `src/generated/prisma/`
 - Import path: `@/generated/prisma/client`
 
+## Production database
+- File: `/home/elvis/sqlite/credit-card-bills-manager.db`
+
 ## Clear Database
 ```bash
 echo 'DELETE FROM "Transaction";' > /tmp/delete.sql

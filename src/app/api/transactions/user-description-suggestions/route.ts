@@ -13,23 +13,37 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const results = await prisma.transaction.groupBy({
-      by: ["userDescription"],
-      where: {
-        description,
-        userDescription: { not: null },
-      },
-      _count: { id: true },
-      orderBy: { _count: { id: "desc" } },
-    });
+    const [userDescriptionResults, categoryResults] = await Promise.all([
+      prisma.transaction.groupBy({
+        by: ["userDescription"],
+        where: {
+          description,
+          userDescription: { not: null },
+        },
+        _count: { id: true },
+        orderBy: { _count: { id: "desc" } },
+      }),
+      prisma.transaction.findMany({
+        where: {
+          description,
+          categoryId: { not: null },
+        },
+        include: { category: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      }),
+    ]);
 
-    if (results.length === 0) {
-      return NextResponse.json({ userDescription: null, count: 0 });
-    }
+    const userDescription =
+      userDescriptionResults.length > 0
+        ? userDescriptionResults[0].userDescription
+        : null;
+    const categoryName =
+      categoryResults.length > 0 ? categoryResults[0].category!.name : null;
 
     return NextResponse.json({
-      userDescription: results[0].userDescription,
-      count: results[0]._count.id,
+      userDescription,
+      categoryName,
     });
   } catch (error) {
     console.error("User description suggestions error:", error);

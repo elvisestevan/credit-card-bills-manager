@@ -26,3 +26,5 @@ CREATE INDEX "Transaction_billId_idx" ON "Transaction"("billId");
 CREATE INDEX "Transaction_categoryId_idx" ON "Transaction"("categoryId");
 PRAGMA foreign_keys=ON;
 PRAGMA defer_foreign_keys=OFF;
+
+UPDATE "Transaction" SET "source" = 'manual' WHERE "cardName" = 'C6';
