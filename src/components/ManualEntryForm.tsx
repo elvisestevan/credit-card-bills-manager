@@ -63,7 +63,7 @@ export function ManualEntryForm() {
       const data = await res.json();
       if (data.data) {
         setRecentTransactions(
-          data.data.map((tx: any) => ({
+          data.data.map((tx: { id: number; date: string; description: string; amount: string }) => ({
             id: tx.id,
             date: tx.date,
             description: tx.description,
