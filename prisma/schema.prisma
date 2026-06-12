@@ -43,6 +43,7 @@ model Transaction {
   billId            String
   bill              Bill      @relation(fields: [billId], references: [id])
   createdAt         DateTime  @default(now())
+  source            String    @default("import")
 
   @@index([billId])
   @@index([categoryId])

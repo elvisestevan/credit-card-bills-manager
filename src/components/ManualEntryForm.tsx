@@ -56,6 +56,27 @@ export function ManualEntryForm() {
   const dateRef = useRef<HTMLInputElement>(null);
   const amountRef = useRef<HTMLInputElement>(null);
 
+  async function fetchRecentManual() {
+    try {
+      const res = await fetch("/api/transactions?source=manual&limit=5&sortBy=createdAt&sortOrder=desc");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.data) {
+        setRecentTransactions(
+          data.data.map((tx: { id: number; date: string; description: string; amount: string }) => ({
+            id: tx.id,
+            date: tx.date,
+            description: tx.description,
+            amount: tx.amount,
+            isNegative: parseFloat(tx.amount) < 0,
+          }))
+        );
+      }
+    } catch {
+      // Ignore network errors
+    }
+  }
+
   useEffect(() => {
     setDate(formatDate(new Date()));
     const savedCardName = localStorage.getItem("addTransactionCardName");
@@ -67,6 +88,7 @@ export function ManualEntryForm() {
         if (Array.isArray(data)) setCategories(data.map((c: { name: string }) => c.name));
       })
       .catch(console.error);
+    fetchRecentManual();
   }, []);
 
   useEffect(() => {
@@ -161,16 +183,7 @@ export function ManualEntryForm() {
         localStorage.setItem("addTransactionCardName", cardName.trim());
       }
 
-      setRecentTransactions((prev) => [
-        {
-          id: data.transaction.id,
-          date: data.transaction.date,
-          description: data.transaction.description,
-          amount: data.transaction.amount,
-          isNegative: parseFloat(data.transaction.amount) < 0,
-        },
-        ...prev,
-      ].slice(0, 5));
+      fetchRecentManual();
 
       setMessage({ type: "success", text: "Adicionada!" });
       resetForm();

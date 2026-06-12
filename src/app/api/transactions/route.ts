@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
         totalInstallments: totalInstallments != null ? parseInt(totalInstallments, 10) : null,
         transactionType: transactionType === "checking_account" ? "checking_account" : "credit_card",
         importId: crypto.randomUUID(),
+        source: "manual",
         billId: bill.id,
         categoryId,
       },
@@ -77,6 +78,7 @@ export async function POST(request: NextRequest) {
         installmentNumber: transaction.installmentNumber,
         totalInstallments: transaction.totalInstallments,
         transactionType: transaction.transactionType,
+        source: "manual",
         billId: transaction.billId,
         billMonthYear: transaction.bill.monthYear,
         categoryId: transaction.categoryId,
@@ -109,7 +111,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const validSortFields = ["date", "amount", "description"];
+    const validSortFields = ["date", "amount", "description", "createdAt"];
     const orderByField = validSortFields.includes(sortBy) ? sortBy : "date";
     const orderByDirection =
       sortOrder === "asc" ? ("asc" as const) : ("desc" as const);
@@ -145,6 +147,11 @@ export async function GET(request: NextRequest) {
 
     if (cardNameFilter) {
       where.cardName = cardNameFilter;
+    }
+
+    const source = searchParams.get("source");
+    if (source === "manual" || source === "import") {
+      where.source = source;
     }
 
     let installmentIds: number[] | undefined;
@@ -190,6 +197,7 @@ export async function GET(request: NextRequest) {
       installmentNumber: t.installmentNumber,
       totalInstallments: t.totalInstallments,
       transactionType: t.transactionType as TransactionType,
+      source: t.source,
       categoryId: t.categoryId,
       categoryName: t.category?.name || null,
       billId: t.billId,
