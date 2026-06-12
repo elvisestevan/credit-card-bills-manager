@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { CheckingAccountPreviewItem } from "@/types";
+import { CategoryDropdown } from "@/components/CategoryDropdown";
 
 export function CheckingAccountImport() {
   const [isDragging, setIsDragging] = useState(false);
@@ -12,6 +13,9 @@ export function CheckingAccountImport() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [userDescriptions, setUserDescriptions] = useState<Record<string, string>>({});
+  const [userCategories, setUserCategories] = useState<
+    Record<string, { categoryId: number | null; categoryName?: string }>
+  >({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatCurrency = (value: number) =>
@@ -85,6 +89,17 @@ export function CheckingAccountImport() {
       });
       if (Object.keys(filledUserDescriptions).length > 0) {
         formData.append("userDescriptions", JSON.stringify(filledUserDescriptions));
+      }
+
+      const filledUserCategories: Record<string, { categoryId: number | null; categoryName?: string }> = {};
+      selectedItems.forEach((item) => {
+        const key = `${item.date}|${item.description}|${item.amount}`;
+        if (userCategories[key]) {
+          filledUserCategories[key] = userCategories[key];
+        }
+      });
+      if (Object.keys(filledUserCategories).length > 0) {
+        formData.append("userCategories", JSON.stringify(filledUserCategories));
       }
 
       const response = await fetch("/api/transactions/import/checking-account/confirm", {
@@ -194,6 +209,7 @@ export function CheckingAccountImport() {
     setMessage(null);
     setParseErrors([]);
     setUserDescriptions({});
+    setUserCategories({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -309,6 +325,7 @@ export function CheckingAccountImport() {
                   <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Date</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Description</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Label</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Category</th>
                   <th className="px-4 py-3 text-right text-sm font-medium text-zinc-400">Amount</th>
                   <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">Bill (MM-YYYY)</th>
                 </tr>
@@ -343,6 +360,19 @@ export function CheckingAccountImport() {
                         }}
                         placeholder="Add label..."
                         className="w-full bg-transparent border border-zinc-700 rounded px-2 py-0.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm min-w-[200px]" onClick={(e) => e.stopPropagation()}>
+                      <CategoryDropdown
+                        value={userCategories[`${item.date}|${item.description}|${item.amount}`]?.categoryId ?? null}
+                        categoryName={userCategories[`${item.date}|${item.description}|${item.amount}`]?.categoryName}
+                        onChange={(categoryId, categoryName) => {
+                          const key = `${item.date}|${item.description}|${item.amount}`;
+                          setUserCategories((prev) => ({
+                            ...prev,
+                            [key]: { categoryId, categoryName },
+                          }));
+                        }}
                       />
                     </td>
                     <td className={`px-4 py-3 text-sm text-right font-medium ${getAmountClass(item.amount)}`}>
