@@ -121,6 +121,7 @@ export async function POST(request: NextRequest) {
           totalInstallments: t.totalInstallments,
           transactionType: "credit_card",
           importId: batchImportId,
+          source: "import",
           billId: bill.id,
         })),
       });

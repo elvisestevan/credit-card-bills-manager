@@ -166,6 +166,7 @@ export async function POST(request: NextRequest) {
             amount: new Prisma.Decimal(t.amount),
             transactionType: "checking_account",
             importId: batchImportId,
+            source: "import",
             billId,
           };
         }),
