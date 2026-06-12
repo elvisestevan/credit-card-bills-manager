@@ -47,6 +47,7 @@ export function ManualEntryForm() {
   const [installmentNumber, setInstallmentNumber] = useState("");
   const [totalInstallments, setTotalInstallments] = useState("");
   const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
+  const [showAllRecent, setShowAllRecent] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
@@ -55,10 +56,11 @@ export function ManualEntryForm() {
 
   const dateRef = useRef<HTMLInputElement>(null);
   const amountRef = useRef<HTMLInputElement>(null);
+  const hasUserSetCategory = useRef(false);
 
-  async function fetchRecentManual() {
+  async function fetchRecentManual(limit = 5) {
     try {
-      const res = await fetch("/api/transactions?source=manual&limit=5&sortBy=createdAt&sortOrder=desc");
+      const res = await fetch(`/api/transactions?source=manual&limit=${limit}&sortBy=date&sortOrder=desc`);
       if (!res.ok) return;
       const data = await res.json();
       if (data.data) {
@@ -88,7 +90,7 @@ export function ManualEntryForm() {
         if (Array.isArray(data)) setCategories(data.map((c: { name: string }) => c.name));
       })
       .catch(console.error);
-    fetchRecentManual();
+    fetchRecentManual(5);
   }, []);
 
   useEffect(() => {
@@ -101,6 +103,9 @@ export function ManualEntryForm() {
           const data = await res.json();
           if (data.userDescription && !userDescription) {
             setUserDescription(data.userDescription);
+          }
+          if (data.categoryName && !hasUserSetCategory.current && !category) {
+            setCategory(data.categoryName);
           }
         }
       } catch {
@@ -183,7 +188,7 @@ export function ManualEntryForm() {
         localStorage.setItem("addTransactionCardName", cardName.trim());
       }
 
-      fetchRecentManual();
+      fetchRecentManual(showAllRecent ? 100 : 5);
 
       setMessage({ type: "success", text: "Adicionada!" });
       resetForm();
@@ -355,7 +360,7 @@ export function ManualEntryForm() {
             <input
               type="text"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => { hasUserSetCategory.current = true; setCategory(e.target.value); }}
               list="category-list"
               className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-zinc-100 focus:outline-none focus:border-zinc-500"
               placeholder="Type or select"
@@ -456,6 +461,15 @@ export function ManualEntryForm() {
               </tbody>
             </table>
           </div>
+        )}
+        {recentTransactions.length > 0 && !showAllRecent && (
+          <button
+            type="button"
+            onClick={() => { setShowAllRecent(true); fetchRecentManual(100); }}
+            className="mt-2 w-full py-2 text-sm text-zinc-400 hover:text-zinc-200 bg-zinc-900 border border-zinc-800 rounded transition-colors"
+          >
+            Show more
+          </button>
         )}
       </section>
 
