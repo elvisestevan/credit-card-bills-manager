@@ -20,8 +20,8 @@ describe("GET /api/transactions", async () => {
 
   it("should return default pagination and sorted by date desc", async () => {
     const mockTransactions = [
-      { id: 1, date: new Date("2024-01-02"), description: "Test2", userDescription: null, amount: { toString: () => "-100" }, cardName: null, installmentNumber: null, totalInstallments: null, categoryId: null, category: null, billId: "bill1", bill: { monthYear: "01-2024" } },
-      { id: 2, date: new Date("2024-01-01"), description: "Test1", userDescription: null, amount: { toString: () => "-50" }, cardName: null, installmentNumber: null, totalInstallments: null, categoryId: null, category: null, billId: "bill2", bill: { monthYear: "02-2024" } },
+      { id: 1, date: new Date("2024-01-02"), description: "Test2", userDescription: null, amount: { toString: () => "-100" }, cardName: null, installmentNumber: null, totalInstallments: null, transactionType: "credit_card", source: "import", categoryId: null, category: null, billId: "bill1", bill: { monthYear: "01-2024" } },
+      { id: 2, date: new Date("2024-01-01"), description: "Test1", userDescription: null, amount: { toString: () => "-50" }, cardName: null, installmentNumber: null, totalInstallments: null, transactionType: "credit_card", source: "import", categoryId: null, category: null, billId: "bill2", bill: { monthYear: "02-2024" } },
     ];
     mockPrisma.transaction.findMany.mockResolvedValueOnce(mockTransactions);
     mockPrisma.transaction.count.mockResolvedValueOnce(2);
@@ -129,7 +129,7 @@ describe("GET /api/transactions", async () => {
 
   it("should transform transactions correctly", async () => {
     const mockTransactions = [
-      { id: 1, date: new Date("2024-01-01"), description: "Test", userDescription: null, amount: { toString: () => "-100.50" }, cardName: "Itau", installmentNumber: 1, totalInstallments: 3, categoryId: null, category: null, billId: "bill1", bill: { monthYear: "01-2024" } },
+      { id: 1, date: new Date("2024-01-01"), description: "Test", userDescription: null, amount: { toString: () => "-100.50" }, cardName: "Itau", installmentNumber: 1, totalInstallments: 3, transactionType: "credit_card", source: "import", categoryId: null, category: null, billId: "bill1", bill: { monthYear: "01-2024" } },
     ];
     mockPrisma.transaction.findMany.mockResolvedValueOnce(mockTransactions);
     mockPrisma.transaction.count.mockResolvedValueOnce(1);
@@ -150,6 +150,8 @@ describe("GET /api/transactions", async () => {
       cardName: "Itau",
       installmentNumber: 1,
       totalInstallments: 3,
+      transactionType: "credit_card",
+      source: "import",
       categoryId: null,
       categoryName: null,
       billId: "bill1",
@@ -170,6 +172,40 @@ describe("GET /api/transactions", async () => {
     expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         orderBy: { description: "desc" },
+      })
+    );
+  });
+
+  it("should filter by source=manual", async () => {
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
+    mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
+
+    const request = new Request("http://localhost:3000/api/transactions?source=manual");
+    await GET(request);
+
+    expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          source: "manual",
+        }),
+      })
+    );
+  });
+
+  it("should filter by source=import", async () => {
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
+    mockPrisma.transaction.count.mockResolvedValueOnce(0);
+    mockPrisma.transaction.findMany.mockResolvedValueOnce([]);
+
+    const request = new Request("http://localhost:3000/api/transactions?source=import");
+    await GET(request);
+
+    expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          source: "import",
+        }),
       })
     );
   });

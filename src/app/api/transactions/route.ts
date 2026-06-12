@@ -147,6 +147,11 @@ export async function GET(request: NextRequest) {
       where.cardName = cardNameFilter;
     }
 
+    const source = searchParams.get("source");
+    if (source === "manual" || source === "import") {
+      where.source = source;
+    }
+
     let installmentIds: number[] | undefined;
 
     if (lastInstallment) {
@@ -190,6 +195,7 @@ export async function GET(request: NextRequest) {
       installmentNumber: t.installmentNumber,
       totalInstallments: t.totalInstallments,
       transactionType: t.transactionType as TransactionType,
+      source: t.source,
       categoryId: t.categoryId,
       categoryName: t.category?.name || null,
       billId: t.billId,
