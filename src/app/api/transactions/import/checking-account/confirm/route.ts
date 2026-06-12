@@ -44,6 +44,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const userCategoriesRaw = formData.get("userCategories") as string | null;
+    let userCategories: Record<string, { categoryId: number | null; categoryName?: string }> = {};
+    if (userCategoriesRaw) {
+      try {
+        userCategories = JSON.parse(userCategoriesRaw);
+        if (typeof userCategories !== "object" || Array.isArray(userCategories)) {
+          userCategories = {};
+        }
+      } catch {
+        // Invalid JSON, ignore
+      }
+    }
+
     const content = await file.text();
     const { transactions, errors: parseErrors } = parseCheckingAccountCsv(content);
 
@@ -112,6 +125,21 @@ export async function POST(request: NextRequest) {
       return `${m}-${t.date.getFullYear()}`;
     }))];
 
+    const resolvedCategoryIds = new Map<string, number | null>();
+    for (const [key, catSelection] of Object.entries(userCategories)) {
+      if (catSelection.categoryName) {
+        const normalizedName = catSelection.categoryName.trim().toLowerCase();
+        const cat = await prisma.category.upsert({
+          where: { name: normalizedName },
+          update: {},
+          create: { name: normalizedName },
+        });
+        resolvedCategoryIds.set(key, cat.id);
+      } else if (catSelection.categoryId !== undefined) {
+        resolvedCategoryIds.set(key, catSelection.categoryId);
+      }
+    }
+
     const groupedByBill = new Map<string, typeof newTransactions>();
     for (const t of newTransactions) {
       const m = String(t.date.getMonth() + 1).padStart(2, "0");
@@ -134,6 +162,7 @@ export async function POST(request: NextRequest) {
             date: t.date,
             description: t.description,
             userDescription: userDescriptions[key]?.trim() || null,
+            categoryId: resolvedCategoryIds.get(key) ?? null,
             amount: new Prisma.Decimal(t.amount),
             transactionType: "checking_account",
             importId: batchImportId,
