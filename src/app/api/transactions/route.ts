@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const validSortFields = ["date", "amount", "description"];
+    const validSortFields = ["date", "amount", "description", "createdAt"];
     const orderByField = validSortFields.includes(sortBy) ? sortBy : "date";
     const orderByDirection =
       sortOrder === "asc" ? ("asc" as const) : ("desc" as const);
