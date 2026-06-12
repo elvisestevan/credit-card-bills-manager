@@ -90,8 +90,6 @@ export default function ImportReviewPage() {
         const categoryId = selection?.categoryId ?? t.suggestedCategoryId;
         const categoryName = selection?.categoryName;
 
-        if (categoryId === null && !categoryName) return;
-
         const body: { categoryId?: number; categoryName?: string; userDescription?: string | null } = {};
         if (categoryName) {
           body.categoryName = categoryName;
@@ -292,7 +290,7 @@ export default function ImportReviewPage() {
             disabled={isSaving}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium disabled:opacity-50 transition-colors"
           >
-            {isSaving ? "Saving..." : "Save All Categories"}
+            {isSaving ? "Saving..." : "Save All Changes"}
           </button>
         </div>
       </main>
