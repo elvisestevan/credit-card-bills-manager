@@ -44,7 +44,8 @@ bun --bun run prisma db execute --file /tmp/delete.sql
 - `src/app/api/transactions/import/route.ts` - Import API (credit card)
 - `src/app/api/transactions/import/checking-account/preview/route.ts` - Checking account preview API
 - `src/app/api/transactions/import/checking-account/confirm/route.ts` - Checking account import API
-- `src/app/api/transactions/route.ts` - List API
+- `src/app/api/transactions/route.ts` - List API (supports `source` filter: `?source=manual` or `?source=import`)
+- Transaction `source` field: `"manual"` | `"import"` — distinguishes manual entries from CSV imports
 - `src/app/transactions/add/page.tsx` - Unified add page (tabs: Import CSV / Manual Entry)
 - `src/components/FileUpload.tsx` - Credit card CSV upload component
 - `src/components/CheckingAccountImport.tsx` - Checking account CSV import component
@@ -75,13 +76,17 @@ Semicolon-delimited, no header: `date;description;amount`
 - `src/lib/parsers/__tests__/itau.test.ts` - Parser unit tests (16 tests)
 - `src/lib/parsers/__tests__/checking-account.test.ts` - Checking account parser tests (9 tests)
 - `src/app/api/transactions/import/__tests__/route.test.ts` - Import API tests (7 tests)
-- `src/app/api/transactions/__tests__/route.test.ts` - List API tests (8 tests)
+- `src/app/api/transactions/__tests__/route.test.ts` - List API tests (10 tests)
+- `src/app/api/transactions/__tests__/route.post.test.ts` - Create transaction API tests (7 tests)
 - `src/app/api/transactions/[id]/__tests__/route.test.ts` - PATCH transaction tests (5 tests)
+- `src/app/api/transactions/user-description-suggestions/__tests__/route.test.ts` - User description suggestions tests (3 tests)
+- `src/app/api/budget/__tests__/route.test.ts` - Budget API tests (8 tests)
 - `src/app/api/bills/__tests__/route.test.ts` - Bills API tests (3 tests)
 - `src/app/api/bills/[billId]/transactions/__tests__/route.test.ts` - Bill transactions tests (8 tests)
 - `src/components/__tests__/FileUpload.test.tsx` - FileUpload component tests (13 tests)
+- `src/components/settings/__tests__/BudgetForm.test.tsx` - BudgetForm component tests (8 tests)
 
 ## CI Pipeline
 - `.github/workflows/ci.yml` runs on `main`/`master` pushes and PRs
 - **test job** requires `DATABASE_URL="file:./dev.db" bun --bun run prisma generate` before `bun run test`
-- All 69 tests pass via `vitest` with `jsdom` environment
+- All 99 tests pass via `vitest` with `jsdom` environment
