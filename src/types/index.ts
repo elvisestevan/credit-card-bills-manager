@@ -115,4 +115,6 @@ export interface CheckingAccountPreviewItem {
   billMonthYear: string;
   selected: boolean;
   exists: boolean;
+  categoryId?: number | null;
+  categoryName?: string;
 }
