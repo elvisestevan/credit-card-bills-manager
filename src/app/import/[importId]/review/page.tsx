@@ -15,6 +15,7 @@ interface ImportTransaction {
   transactionType?: string;
   suggestedCategoryId: number | null;
   suggestedCategoryName: string | null;
+  userDescription?: string | null;
 }
 
 export default function ImportReviewPage() {
@@ -24,6 +25,7 @@ export default function ImportReviewPage() {
 
   const [transactions, setTransactions] = useState<ImportTransaction[]>([]);
   const [categorySelections, setCategorySelections] = useState<Record<number, { categoryId: number | null; categoryName?: string }>>({});
+  const [labelEdits, setLabelEdits] = useState<Record<number, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveComplete, setSaveComplete] = useState(false);
@@ -88,13 +90,16 @@ export default function ImportReviewPage() {
         const categoryId = selection?.categoryId ?? t.suggestedCategoryId;
         const categoryName = selection?.categoryName;
 
-        if (categoryId === null && !categoryName) return;
-
-        const body: { categoryId?: number; categoryName?: string } = {};
+        const body: { categoryId?: number; categoryName?: string; userDescription?: string | null } = {};
         if (categoryName) {
           body.categoryName = categoryName;
         } else if (categoryId) {
           body.categoryId = categoryId;
+        }
+
+        const labelValue = labelEdits[t.id];
+        if (labelValue !== undefined) {
+          body.userDescription = labelValue || null;
         }
 
         if (Object.keys(body).length === 0) return;
@@ -210,6 +215,7 @@ export default function ImportReviewPage() {
               <tr className="border-b border-zinc-700">
                 <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Date</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Description</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Label</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Installments</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-zinc-400">Amount</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-zinc-400">Type</th>
@@ -222,6 +228,17 @@ export default function ImportReviewPage() {
                 <tr key={t.id} className="border-b border-zinc-800 hover:bg-zinc-800/50">
                   <td className="px-4 py-3 text-sm text-zinc-300">{t.date}</td>
                   <td className="px-4 py-3 text-sm text-zinc-200">{t.description}</td>
+                  <td className="px-4 py-3 text-sm" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="text"
+                      value={labelEdits[t.id] ?? t.userDescription ?? ""}
+                      onChange={(e) => {
+                        setLabelEdits((prev) => ({ ...prev, [t.id]: e.target.value }));
+                      }}
+                      placeholder="Add label..."
+                      className="w-full bg-transparent border border-zinc-700 rounded px-2 py-0.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                    />
+                  </td>
                   <td className="px-4 py-3 text-sm text-zinc-300">
                     {t.installmentNumber && t.totalInstallments
                       ? `${t.installmentNumber}/${t.totalInstallments}`
@@ -273,7 +290,7 @@ export default function ImportReviewPage() {
             disabled={isSaving}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium disabled:opacity-50 transition-colors"
           >
-            {isSaving ? "Saving..." : "Save All Categories"}
+            {isSaving ? "Saving..." : "Save All Changes"}
           </button>
         </div>
       </main>
