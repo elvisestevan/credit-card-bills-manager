@@ -63,6 +63,10 @@ export function MonthlySection({ transactionType }: MonthlySectionProps) {
   const [trendData, setTrendData] = useState<TrendPoint[]>([]);
   const [trendCategoryName, setTrendCategoryName] = useState<string>("");
   const [categoryIdMap, setCategoryIdMap] = useState<Record<string, number>>({});
+  const [categoryTransactions, setCategoryTransactions] = useState<
+    { id: number; date: string; description: string; amount: string }[]
+  >([]);
+  const [isLoadingCategoryTransactions, setIsLoadingCategoryTransactions] = useState(false);
 
   useEffect(() => {
     async function fetchBills() {
@@ -101,6 +105,7 @@ export function MonthlySection({ transactionType }: MonthlySectionProps) {
       setIsLoadingData(true);
       setSelectedCategory(null);
       setTrendData([]);
+      setCategoryTransactions([]);
       try {
         const params = new URLSearchParams({ billId: selectedBillId! });
         if (transactionType) params.set("type", transactionType);
@@ -151,6 +156,32 @@ export function MonthlySection({ transactionType }: MonthlySectionProps) {
     }
     fetchTrend();
   }, [selectedCategory, categoryIdMap]);
+
+  useEffect(() => {
+    if (!selectedCategory || !selectedBillId || !categoryIdMap[selectedCategory]) {
+      setCategoryTransactions([]);
+      return;
+    }
+
+    const categoryId = categoryIdMap[selectedCategory];
+
+    async function fetchCategoryTransactions() {
+      setIsLoadingCategoryTransactions(true);
+      try {
+        const res = await fetch(
+          `/api/bills/${selectedBillId}/transactions?categoryId=${categoryId}&limit=50&sortBy=date&sortOrder=desc`
+        );
+        const json = await res.json();
+        setCategoryTransactions(json.data || []);
+      } catch (err) {
+        console.error("Failed to load category transactions:", err);
+        setCategoryTransactions([]);
+      } finally {
+        setIsLoadingCategoryTransactions(false);
+      }
+    }
+    fetchCategoryTransactions();
+  }, [selectedCategory, selectedBillId, categoryIdMap]);
 
   if (isLoadingBills) {
     return (
@@ -213,6 +244,8 @@ export function MonthlySection({ transactionType }: MonthlySectionProps) {
               data={data.categoryBreakdown}
               selectedCategory={selectedCategory}
               onSelectCategory={setSelectedCategory}
+              transactions={categoryTransactions}
+              isLoadingTransactions={isLoadingCategoryTransactions}
             />
           </div>
 

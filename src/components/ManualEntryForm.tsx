@@ -332,6 +332,24 @@ export function ManualEntryForm() {
           </div>
 
           <div>
+            <label className="block text-sm text-zinc-400 mb-1">Category</label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => { hasUserSetCategory.current = true; setCategory(e.target.value); }}
+              list="category-list"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-zinc-100 focus:outline-none focus:border-zinc-500"
+              placeholder="Type or select"
+              autoComplete="off"
+            />
+            <datalist id="category-list">
+              {categories.map((cat) => (
+                <option key={cat} value={cat} />
+              ))}
+            </datalist>
+          </div>
+
+          <div>
             <label className="block text-sm text-zinc-400 mb-1">Card</label>
             <input
               type="text"
@@ -353,24 +371,6 @@ export function ManualEntryForm() {
               <option value="credit_card">Credit Card</option>
               <option value="checking_account">Checking Account</option>
             </select>
-          </div>
-
-          <div>
-            <label className="block text-sm text-zinc-400 mb-1">Category</label>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => { hasUserSetCategory.current = true; setCategory(e.target.value); }}
-              list="category-list"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-zinc-100 focus:outline-none focus:border-zinc-500"
-              placeholder="Type or select"
-              autoComplete="off"
-            />
-            <datalist id="category-list">
-              {categories.map((cat) => (
-                <option key={cat} value={cat} />
-              ))}
-            </datalist>
           </div>
 
           <div className="flex items-end">
