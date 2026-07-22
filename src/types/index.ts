@@ -118,3 +118,23 @@ export interface CheckingAccountPreviewItem {
   categoryId?: number | null;
   categoryName?: string;
 }
+
+export interface ItauXlsxTransaction {
+  date: Date;
+  description: string;
+  amount: number;
+  installmentNumber: number | null;
+  totalInstallments: number | null;
+}
+
+export interface CreditCardXlsxPreviewItem {
+  index: number;
+  date: string;
+  description: string;
+  amount: number;
+  installmentNumber: number | null;
+  totalInstallments: number | null;
+  billMonthYear: string;
+  selected: boolean;
+  exists: boolean;
+}

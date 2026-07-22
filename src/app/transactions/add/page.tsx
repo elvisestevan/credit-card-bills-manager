@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FileUpload } from "@/components/FileUpload";
 import { CheckingAccountImport } from "@/components/CheckingAccountImport";
+import { CreditCardXlsxImport } from "@/components/CreditCardXlsxImport";
 import { ManualEntryForm } from "@/components/ManualEntryForm";
 
 const VALID_TABS = ["import-csv", "manual"] as const;
@@ -15,7 +16,7 @@ function AddTransactionContent() {
   const activeTab: Tab = (VALID_TABS as readonly string[]).includes(searchParams.get("tab") || "")
     ? (searchParams.get("tab") as Tab)
     : "import-csv";
-  const [csvType, setCsvType] = useState<"credit_card" | "checking_account">("credit_card");
+  const [csvType, setCsvType] = useState<"credit_card" | "credit_card_xlsx" | "checking_account">("credit_card");
 
   const setTab = (tab: Tab) => {
     router.replace(`/transactions/add?tab=${tab}`);
@@ -29,7 +30,7 @@ function AddTransactionContent() {
             Add Transactions
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Import CSV files or manually enter transactions
+            Import CSV/XLSX files or manually enter transactions
           </p>
         </div>
       </header>
@@ -66,16 +67,19 @@ function AddTransactionContent() {
               </label>
               <select
                 value={csvType}
-                onChange={(e) => setCsvType(e.target.value as "credit_card" | "checking_account")}
+                onChange={(e) => setCsvType(e.target.value as "credit_card" | "credit_card_xlsx" | "checking_account")}
                 className="w-full max-w-xs px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="credit_card">Credit Card</option>
+                <option value="credit_card">Credit Card (CSV)</option>
+                <option value="credit_card_xlsx">Credit Card (XLSX)</option>
                 <option value="checking_account">Checking Account</option>
               </select>
             </div>
 
             {csvType === "credit_card" ? (
               <FileUpload onUploadComplete={() => {}} />
+            ) : csvType === "credit_card_xlsx" ? (
+              <CreditCardXlsxImport />
             ) : (
               <CheckingAccountImport />
             )}
