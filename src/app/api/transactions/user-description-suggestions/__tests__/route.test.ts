@@ -24,7 +24,7 @@ describe("GET /api/transactions/user-description-suggestions", async () => {
       { userDescription: "Streaming", _count: { id: 2 } },
     ]);
     mockPrisma.transaction.findMany.mockResolvedValueOnce([
-      { category: { name: "streaming" } },
+      { category: { id: 3, name: "streaming" } },
     ]);
 
     const request = new Request("http://localhost:3000/api/transactions/user-description-suggestions?description=NETFLIX");
@@ -32,7 +32,7 @@ describe("GET /api/transactions/user-description-suggestions", async () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({ userDescription: "Netflix", categoryName: "streaming" });
+    expect(data).toEqual({ userDescription: "Netflix", categoryName: "streaming", categoryId: 3 });
   });
 
   it("should return null when no suggestions exist", async () => {
@@ -44,7 +44,7 @@ describe("GET /api/transactions/user-description-suggestions", async () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({ userDescription: null, categoryName: null });
+    expect(data).toEqual({ userDescription: null, categoryName: null, categoryId: null });
   });
 
   it("should return 400 when description param is missing", async () => {
