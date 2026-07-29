@@ -52,6 +52,8 @@ export function CreditCardXlsxImport() {
         if (result.errors?.length > 0) setParseErrors(result.errors);
         if (result.items.length === 0) {
           setMessage({ type: "error", text: "No valid transactions found in the file" });
+        } else if (result.items.every((i: CreditCardXlsxPreviewItem) => i.exists)) {
+          setMessage({ type: "error", text: "All transactions in this file have already been imported" });
         }
       }
     } catch {
