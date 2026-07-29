@@ -16,6 +16,9 @@ export function CheckingAccountImport() {
   const [userCategories, setUserCategories] = useState<
     Record<string, { categoryId: number | null; categoryName?: string }>
   >({});
+  const [suggestedCategories, setSuggestedCategories] = useState<
+    Record<string, { id: number; name: string } | null>
+  >({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatCurrency = (value: number) =>
@@ -178,6 +181,7 @@ export function CheckingAccountImport() {
     const uniqueDescriptions = [...new Set(items.map((i) => i.description))];
     const fetchSuggestions = async () => {
       const suggestions: Record<string, string> = {};
+      const catSuggestions: Record<string, { id: number; name: string } | null> = {};
       for (const desc of uniqueDescriptions) {
         try {
           const res = await fetch(`/api/transactions/user-description-suggestions?description=${encodeURIComponent(desc)}`);
@@ -190,12 +194,19 @@ export function CheckingAccountImport() {
                 suggestions[key] = data.userDescription;
               }
             }
+            if (data.categoryId && data.categoryName) {
+              for (const item of items.filter((i) => i.description === desc)) {
+                const key = `${item.date}|${item.description}|${item.amount}`;
+                catSuggestions[key] = { id: data.categoryId, name: data.categoryName };
+              }
+            }
           }
         } catch {
           // Ignore
         }
       }
       setUserDescriptions((prev) => ({ ...prev, ...suggestions }));
+      setSuggestedCategories((prev) => ({ ...prev, ...catSuggestions }));
     };
     fetchSuggestions();
   }, [items]);
@@ -210,6 +221,7 @@ export function CheckingAccountImport() {
     setParseErrors([]);
     setUserDescriptions({});
     setUserCategories({});
+    setSuggestedCategories({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -366,6 +378,7 @@ export function CheckingAccountImport() {
                       <CategoryDropdown
                         value={userCategories[`${item.date}|${item.description}|${item.amount}`]?.categoryId ?? null}
                         categoryName={userCategories[`${item.date}|${item.description}|${item.amount}`]?.categoryName}
+                        suggestedCategory={suggestedCategories[`${item.date}|${item.description}|${item.amount}`] ?? null}
                         onChange={(categoryId, categoryName) => {
                           const key = `${item.date}|${item.description}|${item.amount}`;
                           setUserCategories((prev) => ({

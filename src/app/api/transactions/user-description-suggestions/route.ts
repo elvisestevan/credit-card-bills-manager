@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
           description,
           categoryId: { not: null },
         },
-        include: { category: true },
+        select: { category: { select: { id: true, name: true } } },
         orderBy: { createdAt: "desc" },
         take: 1,
       }),
@@ -40,10 +40,13 @@ export async function GET(request: NextRequest) {
         : null;
     const categoryName =
       categoryResults.length > 0 ? categoryResults[0].category!.name : null;
+    const categoryId =
+      categoryResults.length > 0 ? categoryResults[0].category!.id : null;
 
     return NextResponse.json({
       userDescription,
       categoryName,
+      categoryId,
     });
   } catch (error) {
     console.error("User description suggestions error:", error);
